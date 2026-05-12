@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Header } from "@/components/layout/header";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
@@ -27,7 +28,10 @@ export default function RootLayout({
         }}
         className="antialiased"
       >
-        {children}
+        <Header />
+        <main className="min-h-[calc(100vh-3.5rem)]">
+          {children}
+        </main>
         <Toaster richColors position="top-right" />
       </body>
     </html>
