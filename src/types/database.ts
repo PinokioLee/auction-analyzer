@@ -93,6 +93,30 @@ export type Database = {
         }
         Relationships: []
       }
+      complex_cache: {
+        Row: {
+          complex_no: string
+          complex_name: string
+          address: string | null
+          pyeongs: Json
+          cached_at: string | null
+        }
+        Insert: {
+          complex_no: string
+          complex_name: string
+          address?: string | null
+          pyeongs: Json
+          cached_at?: string | null
+        }
+        Update: {
+          complex_no?: string
+          complex_name?: string
+          address?: string | null
+          pyeongs?: Json
+          cached_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
