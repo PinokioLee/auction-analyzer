@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "경매 분석기 | 아파트 경매 입찰가 분석",
@@ -27,6 +28,7 @@ export default function RootLayout({
         className="antialiased"
       >
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
