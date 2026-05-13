@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // ① 실거래가 조회 (최근 3년)
-  const threeYearsAgo = new Date();
-  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-  const cutoff = threeYearsAgo.toISOString().slice(0, 10);
+  // ① 실거래가 조회 (최근 6개월)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  const cutoff = sixMonthsAgo.toISOString().slice(0, 10);
 
   const { data: txData } = await supabase
     .from("apt_transactions")
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     .eq("exclusive_area", exclusiveArea)
     .gte("deal_date", cutoff)
     .order("deal_date", { ascending: false })
-    .limit(2000);
+    .limit(500);
 
   const transactions: AptTransaction[] = (txData ?? []).map((t) => ({
     aptName: aptName as string,
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
   // ② 층별 시세 분석
   const totalFloorNum = typeof totalFloors === "number" ? totalFloors : 20;
-  const priceAnalysis = analyzePriceByFloor(transactions, totalFloorNum, 36);
+  const priceAnalysis = analyzePriceByFloor(transactions, totalFloorNum, 6);
   const dataSource = transactions.length > 0 ? "apt_db" : "none";
 
   // ③ 취득세 계산

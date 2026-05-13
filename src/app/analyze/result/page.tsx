@@ -108,19 +108,19 @@ function PriceCard({
           </p>
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-400 w-5 shrink-0">저</span>
+              <span className="text-[10px] text-zinc-400 w-7 shrink-0">저가</span>
               <span className="tabular-nums text-[12px] text-zinc-600">
                 {formatKoreanWon(minPrice)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-500 w-5 shrink-0 font-medium">평</span>
+              <span className="text-[10px] text-zinc-500 w-7 shrink-0 font-medium">평균</span>
               <span className="tabular-nums text-[14px] font-bold text-zinc-900">
                 {formatKoreanWon(marketPrice)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-400 w-5 shrink-0">고</span>
+              <span className="text-[10px] text-zinc-400 w-7 shrink-0">고가</span>
               <span className="tabular-nums text-[12px] text-zinc-600">
                 {formatKoreanWon(maxPrice)}
               </span>

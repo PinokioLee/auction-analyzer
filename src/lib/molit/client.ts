@@ -125,7 +125,7 @@ export async function fetchRecentTransactions(
 export function analyzePriceByFloor(
   transactions: AptTransaction[],
   totalFloors: number,
-  months = 36
+  months = 6
 ): FloorPriceAnalysis {
   const lowFloorMax = Math.floor(totalFloors * 0.33);
   const midFloorMax = Math.floor(totalFloors * 0.66);
