@@ -58,19 +58,25 @@ function CostRow({
 function PriceCard({
   label,
   marketPrice,
+  minPrice,
+  maxPrice,
+  count,
   baseCost,
   myInvestment,
 }: {
   label: string;
-  marketPrice: number;
+  marketPrice: number;  // 평균가 (수익 계산 기준)
+  minPrice: number;
+  maxPrice: number;
+  count: number;
   baseCost: number;
   myInvestment: number;
 }) {
   if (marketPrice === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 sm:flex-1">
+      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
         <p className="text-xs font-medium text-zinc-400">{label} 시세</p>
-        <p className="mt-2 text-xs text-zinc-400">데이터 없음</p>
+        <p className="mt-1 text-xs text-zinc-400">거래 데이터 없음</p>
       </div>
     );
   }
@@ -92,29 +98,50 @@ function PriceCard({
       "rounded-xl border px-4 py-3",
       positive ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"
     )}>
-      <div className="flex items-center gap-2">
-        {/* 시세 */}
+      <div className="flex items-start gap-2">
+
+        {/* 왼쪽: 층 구분 + 저가/평균/고가 */}
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] text-zinc-500">{label} 시세</p>
-          <p className="tabular-nums text-[15px] font-bold text-zinc-900 leading-tight">
-            {formatKoreanWon(marketPrice)}
+          <p className="text-[11px] text-zinc-500 mb-1">
+            {label} 시세
+            <span className="ml-1 text-zinc-400">· {count}건</span>
           </p>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-400 w-5 shrink-0">저</span>
+              <span className="tabular-nums text-[12px] text-zinc-600">
+                {formatKoreanWon(minPrice)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-500 w-5 shrink-0 font-medium">평</span>
+              <span className="tabular-nums text-[14px] font-bold text-zinc-900">
+                {formatKoreanWon(marketPrice)}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-zinc-400 w-5 shrink-0">고</span>
+              <span className="tabular-nums text-[12px] text-zinc-600">
+                {formatKoreanWon(maxPrice)}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="h-7 w-px bg-black/10 shrink-0" />
+        <div className="h-16 w-px bg-black/10 shrink-0 self-center" />
 
         {/* 수익 */}
-        <div className="text-right shrink-0">
-          <p className="text-[10px] text-zinc-400">수익</p>
+        <div className="text-right shrink-0 self-center">
+          <p className="text-[10px] text-zinc-400">수익(평균)</p>
           <p className={cn("tabular-nums text-[13px] font-bold", colorText)}>
             {positive ? "+" : ""}{formatManwon(profit)}
           </p>
         </div>
 
-        <div className="h-7 w-px bg-black/10 shrink-0" />
+        <div className="h-16 w-px bg-black/10 shrink-0 self-center" />
 
         {/* 수익률 */}
-        <div className="text-right shrink-0">
+        <div className="text-right shrink-0 self-center">
           <p className="text-[10px] text-zinc-400">
             {hasLoan && investmentROI !== null ? "투자금대비" : "수익률"}
           </p>
@@ -166,6 +193,9 @@ export default async function ResultPage({ searchParams }: Props) {
 
   const priceAnalysis = row.price_analysis as {
     low: number; mid: number; high: number;
+    lowMin: number; lowMax: number; lowCount: number;
+    midMin: number; midMax: number; midCount: number;
+    highMin: number; highMax: number; highCount: number;
     dataCount: number; period: string; dataSource?: string;
     holdMonths?: number; loanRate?: number;
   } | null;
@@ -271,18 +301,27 @@ export default async function ResultPage({ searchParams }: Props) {
               <PriceCard
                 label="저층"
                 marketPrice={priceAnalysis.low}
+                minPrice={priceAnalysis.lowMin ?? 0}
+                maxPrice={priceAnalysis.lowMax ?? 0}
+                count={priceAnalysis.lowCount ?? 0}
                 baseCost={baseCost}
                 myInvestment={myInvestment}
               />
               <PriceCard
                 label="중층"
                 marketPrice={priceAnalysis.mid}
+                minPrice={priceAnalysis.midMin ?? 0}
+                maxPrice={priceAnalysis.midMax ?? 0}
+                count={priceAnalysis.midCount ?? 0}
                 baseCost={baseCost}
                 myInvestment={myInvestment}
               />
               <PriceCard
                 label="고층"
                 marketPrice={priceAnalysis.high}
+                minPrice={priceAnalysis.highMin ?? 0}
+                maxPrice={priceAnalysis.highMax ?? 0}
+                count={priceAnalysis.highCount ?? 0}
                 baseCost={baseCost}
                 myInvestment={myInvestment}
               />

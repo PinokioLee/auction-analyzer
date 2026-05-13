@@ -125,15 +125,15 @@ export async function fetchRecentTransactions(
 export function analyzePriceByFloor(
   transactions: AptTransaction[],
   totalFloors: number,
-  months = 6
+  months = 36
 ): FloorPriceAnalysis {
-  const lowMax = Math.floor(totalFloors * 0.33);
-  const midMax = Math.floor(totalFloors * 0.66);
+  const lowFloorMax = Math.floor(totalFloors * 0.33);
+  const midFloorMax = Math.floor(totalFloors * 0.66);
 
   const buckets = {
-    low: transactions.filter((t) => t.floor <= lowMax),
-    mid: transactions.filter((t) => t.floor > lowMax && t.floor <= midMax),
-    high: transactions.filter((t) => t.floor > midMax),
+    low:  transactions.filter((t) => t.floor <= lowFloorMax),
+    mid:  transactions.filter((t) => t.floor > lowFloorMax && t.floor <= midFloorMax),
+    high: transactions.filter((t) => t.floor > midFloorMax),
   };
 
   const avg = (items: AptTransaction[]) =>
@@ -141,10 +141,18 @@ export function analyzePriceByFloor(
       ? 0
       : Math.round(items.reduce((s, t) => s + t.dealAmount, 0) / items.length);
 
-  const overallAvg = avg(transactions);
+  const minPrice = (items: AptTransaction[]) =>
+    items.length === 0 ? 0 : Math.min(...items.map((t) => t.dealAmount));
 
-  const low = avg(buckets.low) || overallAvg;
-  const mid = avg(buckets.mid) || overallAvg;
+  const maxPrice = (items: AptTransaction[]) =>
+    items.length === 0 ? 0 : Math.max(...items.map((t) => t.dealAmount));
+
+  const overallAvg = avg(transactions);
+  const overallMin = minPrice(transactions);
+  const overallMax = maxPrice(transactions);
+
+  const low  = avg(buckets.low)  || overallAvg;
+  const mid  = avg(buckets.mid)  || overallAvg;
   const high = avg(buckets.high) || overallAvg;
 
   // 기간 문자열 생성
@@ -154,9 +162,16 @@ export function analyzePriceByFloor(
   const start = `${startDate.getFullYear()}.${String(startDate.getMonth() + 1).padStart(2, "0")}`;
 
   return {
-    low,
-    mid,
-    high,
+    low,  mid,  high,
+    lowMin:   buckets.low.length  > 0 ? minPrice(buckets.low)  : overallMin,
+    lowMax:   buckets.low.length  > 0 ? maxPrice(buckets.low)  : overallMax,
+    lowCount: buckets.low.length,
+    midMin:   buckets.mid.length  > 0 ? minPrice(buckets.mid)  : overallMin,
+    midMax:   buckets.mid.length  > 0 ? maxPrice(buckets.mid)  : overallMax,
+    midCount: buckets.mid.length,
+    highMin:  buckets.high.length > 0 ? minPrice(buckets.high) : overallMin,
+    highMax:  buckets.high.length > 0 ? maxPrice(buckets.high) : overallMax,
+    highCount: buckets.high.length,
     dataCount: transactions.length,
     period: `${start} ~ ${end}`,
   };

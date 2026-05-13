@@ -29,11 +29,16 @@ export interface AptTransaction {
 }
 
 export interface FloorPriceAnalysis {
-  low: number;       // 저층 평균 (만원)
-  mid: number;       // 중층 평균 (만원)
-  high: number;      // 고층 평균 (만원)
+  // 평균가 (수익 계산 기준)
+  low: number;
+  mid: number;
+  high: number;
+  // tier별 저가 / 고가 / 건수
+  lowMin: number;  lowMax: number;  lowCount: number;
+  midMin: number;  midMax: number;  midCount: number;
+  highMin: number; highMax: number; highCount: number;
   dataCount: number;
-  period: string;    // "2025.11 ~ 2026.04"
+  period: string;   // "2023.05 ~ 2026.05"
 }
 
 // ── 비용 계산 ─────────────────────────────────────
