@@ -1,22 +1,3 @@
-// ── 입력 ──────────────────────────────────────────
-
-export interface AuctionInput {
-  apartmentName: string;
-  area: number;
-  // TODO: 국토부 단지 데이터 수집 완료 후 층수 입력 필드 복원
-  bidPrice: number;
-  regionCode: string; // 법정동코드 5자리
-  additionalCosts: AdditionalCosts;
-}
-
-export interface AdditionalCosts {
-  legalFee: number;          // 법무사 비용 (만원)
-  evictionFee: number;       // 명도비용 (만원)
-  unpaidMaintenance: number; // 미납관리비 (만원)
-  loanInterest: number;      // 대출이자 (만원)
-  enforcementFee: number;    // 강제집행 비용 (만원)
-}
-
 // ── 국토부 실거래 ──────────────────────────────────
 
 export interface AptTransaction {
@@ -84,11 +65,3 @@ export interface AnalyzeResult {
   historyId: string;
 }
 
-// ── 레거시 (하위호환) ──────────────────────────────
-
-export interface TotalCostResult {
-  bidPrice: number;
-  acquisitionTax: AcquisitionTaxResult;
-  additionalCosts: AdditionalCosts;
-  grandTotal: number;
-}
