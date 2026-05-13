@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
-import type { AnalyzeResult } from "@/types/auction";
 
 export const metadata: Metadata = {
   title: "분석 결과 | 경매 분석기",
@@ -14,51 +13,6 @@ export const metadata: Metadata = {
 
 interface Props {
   searchParams: Promise<{ id?: string }>;
-}
-
-// ── 층 구간 카드 ─────────────────────────────────
-
-function FloorCard({
-  label,
-  marketPrice,
-  totalCost,
-  profit,
-  roi,
-}: {
-  label: string;
-  marketPrice: number;
-  totalCost: number;
-  profit: number;
-  roi: number;
-}) {
-  const positive = profit >= 0;
-  return (
-    <Card className="flex-1">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {marketPrice === 0 ? (
-          <p className="text-xs text-muted-foreground">데이터 없음</p>
-        ) : (
-          <>
-            <p className="text-lg font-bold">{formatKoreanWon(marketPrice)}</p>
-            <div className="flex items-center gap-1.5">
-              <Badge variant={positive ? "default" : "destructive"} className="text-xs">
-                {positive ? "+" : ""}
-                {formatManwon(profit)}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {positive ? "▲" : "▼"} {Math.abs(roi)}%
-              </span>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
 }
 
 // ── 결과 없음 컴포넌트 ────────────────────────────
@@ -74,6 +28,26 @@ function NotFound({ message }: { message: string }) {
   );
 }
 
+// ── 손익 배지 ─────────────────────────────────────
+
+function ProfitBadge({ profit, roi }: { profit: number; roi: number }) {
+  const positive = profit >= 0;
+  return (
+    <div className="flex items-center gap-2">
+      <Badge
+        variant={positive ? "default" : "destructive"}
+        className="text-sm px-3 py-1"
+      >
+        {positive ? "+" : ""}
+        {formatManwon(profit)}
+      </Badge>
+      <span className="text-sm text-muted-foreground">
+        {positive ? "▲" : "▼"} {Math.abs(roi)}%
+      </span>
+    </div>
+  );
+}
+
 // ── 페이지 ────────────────────────────────────────
 
 export default async function ResultPage({ searchParams }: Props) {
@@ -81,7 +55,6 @@ export default async function ResultPage({ searchParams }: Props) {
 
   if (!id) return <NotFound message="분석 결과를 찾을 수 없습니다." />;
 
-  // Supabase에서 결과 조회
   const supabase = await createClient();
   const { data: row, error } = await supabase
     .from("analysis_history")
@@ -91,20 +64,32 @@ export default async function ResultPage({ searchParams }: Props) {
 
   if (error || !row) return <NotFound message="분석 데이터가 존재하지 않습니다." />;
 
-  // price_analysis JSON 파싱
-  const priceAnalysis = row.price_analysis as unknown as AnalyzeResult["priceAnalysis"] | null;
-  const hasPrice = priceAnalysis && priceAnalysis.dataCount > 0;
+  const priceAnalysis = row.price_analysis as {
+    low: number;
+    mid: number;
+    high: number;
+    dataCount: number;
+    period: string;
+    dataSource?: string;
+  } | null;
 
   const totalCost = row.total_cost ?? row.bid_price;
   const acquisitionTax = row.acquisition_tax ?? 0;
 
-  // 수익 계산 (결과 페이지에서 재계산)
-  const calcProfit = (price: number) => price - totalCost;
-  const calcROI = (profit: number) =>
-    totalCost > 0 ? Math.round((profit / totalCost) * 1000) / 10 : 0;
+  const hasPrice =
+    priceAnalysis &&
+    priceAnalysis.dataCount > 0 &&
+    priceAnalysis.mid > 0;
+
+  const profit = hasPrice ? priceAnalysis.mid - totalCost : null;
+  const roi =
+    profit !== null && totalCost > 0
+      ? Math.round((profit / totalCost) * 1000) / 10
+      : null;
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
+
       {/* 헤더 */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">{row.apartment_name}</h1>
@@ -124,50 +109,51 @@ export default async function ResultPage({ searchParams }: Props) {
         </CardContent>
       </Card>
 
-      {/* 섹션 1: 시세 분석 */}
+      {/* 손익 분석 */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle className="text-base">층별 시세 분석</CardTitle>
-          {hasPrice && (
+          <CardTitle className="text-base">손익 분석</CardTitle>
+          {hasPrice && priceAnalysis.period && (
             <p className="text-xs text-muted-foreground">
-              최근 {priceAnalysis.period} · {priceAnalysis.dataCount}건 기준
+              기준: {priceAnalysis.period}
             </p>
           )}
         </CardHeader>
         <CardContent>
-          {hasPrice ? (
-            <div className="flex gap-2">
-              <FloorCard
-                label="저층"
-                marketPrice={priceAnalysis.low}
-                totalCost={totalCost}
-                profit={calcProfit(priceAnalysis.low)}
-                roi={calcROI(calcProfit(priceAnalysis.low))}
-              />
-              <FloorCard
-                label="중층"
-                marketPrice={priceAnalysis.mid}
-                totalCost={totalCost}
-                profit={calcProfit(priceAnalysis.mid)}
-                roi={calcROI(calcProfit(priceAnalysis.mid))}
-              />
-              <FloorCard
-                label="RR층"
-                marketPrice={priceAnalysis.high}
-                totalCost={totalCost}
-                profit={calcProfit(priceAnalysis.high)}
-                roi={calcROI(calcProfit(priceAnalysis.high))}
-              />
+          {hasPrice && profit !== null && roi !== null ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">참고 시세</span>
+                <span className="font-semibold">{formatKoreanWon(priceAnalysis.mid)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">최종 취득가</span>
+                <span className="font-semibold">{formatKoreanWon(totalCost)}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">예상 손익</span>
+                <ProfitBadge profit={profit} roi={roi} />
+              </div>
             </div>
           ) : (
-            <p className="py-2 text-sm text-muted-foreground">
-              해당 단지 최근 6개월 실거래 데이터가 없습니다.
-            </p>
+            <div className="space-y-2 py-2">
+              <p className="text-sm text-muted-foreground">
+                참고 시세를 입력하지 않았습니다.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                네이버 부동산·KB부동산 등에서 현재 시세를 확인 후,{" "}
+                <Link href="/analyze" className="underline underline-offset-2">
+                  다시 분석
+                </Link>
+                할 때 입력해보세요.
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 섹션 2: 비용 상세 */}
+      {/* 취득 비용 상세 */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">취득 비용 상세</CardTitle>
