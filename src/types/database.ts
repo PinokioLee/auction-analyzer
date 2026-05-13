@@ -52,6 +52,7 @@ export type Database = {
           id: string
           interior_cost: number | null
           legal_fee: number | null
+          loan_amount: number | null
           loan_fee: number | null
           loan_interest: number | null
           prepayment_penalty: number | null
@@ -72,6 +73,7 @@ export type Database = {
           id?: string
           interior_cost?: number | null
           legal_fee?: number | null
+          loan_amount?: number | null
           loan_fee?: number | null
           loan_interest?: number | null
           prepayment_penalty?: number | null
@@ -92,6 +94,7 @@ export type Database = {
           id?: string
           interior_cost?: number | null
           legal_fee?: number | null
+          loan_amount?: number | null
           loan_fee?: number | null
           loan_interest?: number | null
           prepayment_penalty?: number | null

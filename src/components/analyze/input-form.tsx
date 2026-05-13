@@ -330,6 +330,7 @@ export function AuctionInputForm() {
 
     // 파생 계산값
     const evictionCost    = Math.round(costs.evictionCostPerPyeong * areaPyeong);
+    const loanAmount      = Math.round(loanPrincipal); // 대출 원금 (만원)
     const loanInterest    = Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)); // 보유 개월 기준
     const loanFee         = Math.round(loanPrincipal * (costs.loanFeeRate / 100));
     const prepaymentPenalty = Math.round(loanPrincipal * (costs.prepaymentRate / 100));
@@ -351,6 +352,7 @@ export function AuctionInputForm() {
           evictionCost,
           unpaidMaintenance: costs.unpaidMaintenance,
           interiorCost: costs.interiorCost,
+          loanAmount,
           loanInterest,
           loanFee,
           prepaymentPenalty,

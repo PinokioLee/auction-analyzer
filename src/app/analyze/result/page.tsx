@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
 
@@ -12,33 +12,20 @@ interface Props {
   searchParams: Promise<{ id?: string }>;
 }
 
-// ── 공인중개사 수수료 계산 (아파트 매매, 2021년 개정 기준) ─
+// ── 공인중개사 수수료 (2021년 개정, 아파트 매매) ──
 function calcBrokerage(salePriceManwon: number): number {
   const won = salePriceManwon * 10_000;
   let rate: number;
-  let maxFee: number = Infinity;
+  let maxFee = Infinity;
 
-  if (won < 50_000_000)        { rate = 0.006; maxFee = 250_000; }
-  else if (won < 200_000_000)  { rate = 0.005; maxFee = 800_000; }
-  else if (won < 900_000_000)  { rate = 0.004; }
-  else if (won < 1_200_000_000){ rate = 0.005; }
-  else if (won < 1_500_000_000){ rate = 0.006; }
-  else                          { rate = 0.007; }
+  if (won < 50_000_000)         { rate = 0.006; maxFee = 250_000; }
+  else if (won < 200_000_000)   { rate = 0.005; maxFee = 800_000; }
+  else if (won < 900_000_000)   { rate = 0.004; }
+  else if (won < 1_200_000_000) { rate = 0.005; }
+  else if (won < 1_500_000_000) { rate = 0.006; }
+  else                           { rate = 0.007; }
 
-  const fee = Math.min(won * rate, maxFee);
-  return Math.round(fee / 10_000); // 만원 단위
-}
-
-// ── 수익 계산 ──────────────────────────────────────
-// 순수익 = 매도가 - (취득가 - 대출이자 - 중도상환수수료) - 공인중개사수수료
-function calcProfit(
-  salePrice: number,   // 만원
-  baseCost: number,    // 만원 (대출이자/중도상환수수료 제외한 취득가)
-): { profit: number; roi: number; brokerage: number } {
-  const brokerage = calcBrokerage(salePrice);
-  const profit    = salePrice - baseCost - brokerage;
-  const roi       = baseCost > 0 ? Math.round((profit / baseCost) * 1000) / 10 : 0;
-  return { profit, roi, brokerage };
+  return Math.round(Math.min(won * rate, maxFee) / 10_000);
 }
 
 // ── CostRow ────────────────────────────────────────
@@ -61,113 +48,98 @@ function CostRow({
   );
 }
 
-// ── 수익률 배지 (작은) ─────────────────────────────
-
-function ProfitBadge({
-  label,
-  salePrice,
-  baseCost,
-}: {
-  label: string;
-  salePrice: number;
-  baseCost: number;
-}) {
-  if (salePrice === 0) {
-    return (
-      <div className="flex flex-col items-center gap-0.5 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5">
-        <span className="text-[11px] font-medium text-zinc-400">{label}</span>
-        <span className="text-xs text-zinc-300">—</span>
-      </div>
-    );
-  }
-
-  const { profit, roi } = calcProfit(salePrice, baseCost);
-  const positive = profit >= 0;
-
-  return (
-    <div className={cn(
-      "flex flex-col items-center gap-0.5 rounded-lg border px-3 py-2.5 min-w-0",
-      positive
-        ? "border-emerald-200 bg-emerald-50"
-        : "border-red-200 bg-red-50"
-    )}>
-      <span className={cn(
-        "text-[11px] font-medium",
-        positive ? "text-emerald-700" : "text-red-600"
-      )}>
-        {label}
-      </span>
-      <span className={cn(
-        "tabular-nums text-sm font-bold leading-none",
-        positive ? "text-emerald-700" : "text-red-600"
-      )}>
-        {positive ? "+" : ""}{roi}%
-      </span>
-      <span className={cn(
-        "tabular-nums text-[11px]",
-        positive ? "text-emerald-600" : "text-red-500"
-      )}>
-        {positive ? "+" : ""}{formatManwon(profit)}
-      </span>
-    </div>
-  );
-}
-
-// ── 층별 시세 카드 ─────────────────────────────────
+// ── 시세 카드 ─────────────────────────────────────
 
 function PriceCard({
   label,
   marketPrice,
-  baseCost,
+  baseCost,    // 취득가 (대출이자·중도상환수수료 제외)
+  myInvestment, // 실투자금 (취득가 - 대출금액)
 }: {
   label: string;
   marketPrice: number;
   baseCost: number;
+  myInvestment: number;
 }) {
   if (marketPrice === 0) {
     return (
       <div className="flex-1 rounded-xl border border-zinc-200 bg-white p-4">
-        <p className="text-xs font-medium text-zinc-400">{label}</p>
+        <p className="text-xs font-medium text-zinc-400">{label} 시세</p>
         <p className="mt-2 text-xs text-zinc-400">데이터 없음</p>
       </div>
     );
   }
 
-  const { profit, roi, brokerage } = calcProfit(marketPrice, baseCost);
-  const positive = profit >= 0;
+  const brokerage  = calcBrokerage(marketPrice);
+  const profit     = marketPrice - baseCost - brokerage;
+  const positive   = profit >= 0;
+
+  // 실투자금 대비 수익률 (실투자금 있을 때만)
+  const hasLoan       = myInvestment < baseCost;
+  const investmentROI = myInvestment > 0
+    ? Math.round((profit / myInvestment) * 1000) / 10
+    : null;
 
   return (
     <div className={cn(
-      "flex-1 rounded-xl border p-4 transition-all duration-200",
+      "flex-1 rounded-xl border p-4",
       positive ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
     )}>
+      {/* 시세 */}
       <p className="text-xs font-medium text-zinc-500">{label} 시세</p>
-      <p className="tabular-nums mt-1.5 text-[17px] font-bold text-zinc-900">
+      <p className="tabular-nums mt-1 text-[17px] font-bold text-zinc-900 leading-tight">
         {formatKoreanWon(marketPrice)}
       </p>
+
+      {/* 구분선 */}
+      <div className="my-3 border-t border-black/8" />
+
       {/* 수익 */}
-      <div className="mt-2 flex items-center gap-1">
-        {positive
-          ? <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-          : <TrendingDown className="h-3.5 w-3.5 shrink-0 text-red-500" />
-        }
-        <span className={cn(
-          "tabular-nums text-xs font-semibold",
-          positive ? "text-emerald-700" : "text-red-600"
-        )}>
-          {positive ? "+" : ""}{formatManwon(profit)}
-        </span>
-        <span className={cn(
-          "tabular-nums text-xs",
-          positive ? "text-emerald-600" : "text-red-500"
-        )}>
-          ({positive ? "+" : ""}{roi}%)
-        </span>
+      <div className="space-y-1.5">
+        {hasLoan && (
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-zinc-500">내 투자금</span>
+            <span className="tabular-nums text-[11px] font-medium text-zinc-700">
+              {formatManwon(myInvestment)}
+            </span>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-zinc-500">수익</span>
+          <span className={cn(
+            "tabular-nums text-[12px] font-bold",
+            positive ? "text-emerald-700" : "text-red-600"
+          )}>
+            {positive ? "+" : ""}{formatManwon(profit)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-zinc-500">
+            {hasLoan && investmentROI !== null ? "투자금 대비" : "수익률"}
+          </span>
+          <span className={cn(
+            "tabular-nums text-sm font-bold",
+            positive ? "text-emerald-700" : "text-red-600"
+          )}>
+            {hasLoan && investmentROI !== null ? (
+              <>{positive ? "+" : ""}{investmentROI}%</>
+            ) : (
+              <>{positive ? "+" : ""}{Math.round((profit / baseCost) * 1000) / 10}%</>
+            )}
+          </span>
+        </div>
+        {hasLoan && investmentROI !== null && (
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-zinc-400">취득가 대비</span>
+            <span className={cn(
+              "tabular-nums text-[11px]",
+              positive ? "text-emerald-600" : "text-red-500"
+            )}>
+              {positive ? "+" : ""}{Math.round((profit / baseCost) * 1000) / 10}%
+            </span>
+          </div>
+        )}
       </div>
-      {/* 중개수수료 */}
-      <p className="tabular-nums mt-1 text-[11px] text-zinc-400">
-        중개수수료 {formatManwon(brokerage)}
-      </p>
     </div>
   );
 }
@@ -208,14 +180,17 @@ export default async function ResultPage({ searchParams }: Props) {
     dataCount: number; period: string; dataSource?: string;
   } | null;
 
-  const totalCost      = row.total_cost ?? row.bid_price;
-  const acquisitionTax = row.acquisition_tax ?? 0;
-  const hasPrice       = priceAnalysis && priceAnalysis.dataCount > 0;
-
-  // 순취득가: 대출이자 + 중도상환수수료는 매도 수익 계산에서 제외
+  const totalCost          = row.total_cost ?? row.bid_price;
+  const acquisitionTax     = row.acquisition_tax ?? 0;
   const loanInterest       = row.loan_interest ?? 0;
   const prepaymentPenalty  = row.prepayment_penalty ?? 0;
-  const baseCost           = totalCost - loanInterest - prepaymentPenalty;
+  const loanAmount         = row.loan_amount ?? 0;
+  const hasPrice           = priceAnalysis && priceAnalysis.dataCount > 0;
+
+  // 수익 계산 기준 취득가 (대출이자·중도상환수수료 제외)
+  const baseCost = totalCost - loanInterest - prepaymentPenalty;
+  // 실투자금 = 취득가 - 대출금액
+  const myInvestment = totalCost - loanAmount;
 
   return (
     <div className="mx-auto max-w-[640px] px-4 py-10">
@@ -239,47 +214,44 @@ export default async function ResultPage({ searchParams }: Props) {
         </p>
       </div>
 
-      {/* 최종 취득가 + 수익률 요약 */}
+      {/* 최종 취득가 카드 */}
       <div className="mb-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-md">
+        <p className="text-sm text-zinc-500">최종 취득가 (예상)</p>
+        <p className="tabular-nums mt-1 text-[38px] font-bold leading-none tracking-[-0.03em] text-zinc-900">
+          {formatKoreanWon(totalCost)}
+        </p>
+        <p className="tabular-nums mt-1.5 text-xs text-zinc-400">
+          입찰가 {formatKoreanWon(row.bid_price)} + 부대비용 {formatKoreanWon(totalCost - row.bid_price)}
+        </p>
 
-        {/* 상단: 취득가 정보 */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-sm text-zinc-500">최종 취득가 (예상)</p>
-            <p className="tabular-nums mt-1 text-[38px] font-bold leading-none tracking-[-0.03em] text-zinc-900">
-              {formatKoreanWon(totalCost)}
-            </p>
-            <p className="tabular-nums mt-1.5 text-xs text-zinc-400">
-              입찰가 {formatKoreanWon(row.bid_price)} + 부대비용 {formatKoreanWon(totalCost - row.bid_price)}
-            </p>
-          </div>
-        </div>
-
-        {/* 구분선 */}
-        {hasPrice && (
-          <>
-            <div className="my-4 border-t border-zinc-100" />
-
-            {/* 수익률 요약 — 저/중/고층 */}
+        {/* 실투자금 (대출이 있을 때만) */}
+        {loanAmount > 0 && (
+          <div className="mt-4 flex items-center gap-6 rounded-xl bg-zinc-50 px-4 py-3">
             <div>
-              <p className="mb-2.5 flex items-center gap-1.5 text-xs font-medium text-zinc-500">
-                <Minus className="h-3 w-3" />
-                매도 시 예상 수익 (취득가 기준, 부동산 수수료 제외 후)
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <ProfitBadge label="저층" salePrice={priceAnalysis.low}  baseCost={baseCost} />
-                <ProfitBadge label="중층" salePrice={priceAnalysis.mid}  baseCost={baseCost} />
-                <ProfitBadge label="고층" salePrice={priceAnalysis.high} baseCost={baseCost} />
-              </div>
-              <p className="mt-2 text-[11px] text-zinc-400">
-                * 수익 = 매도가 − 취득가 − 중개수수료 (대출이자·중도상환수수료 별도)
+              <p className="text-[11px] text-zinc-400">대출금액</p>
+              <p className="tabular-nums mt-0.5 text-sm font-semibold text-zinc-700">
+                {formatKoreanWon(loanAmount)}
               </p>
             </div>
-          </>
+            <div className="h-8 w-px bg-zinc-200" />
+            <div>
+              <p className="text-[11px] text-zinc-400">실투자금</p>
+              <p className="tabular-nums mt-0.5 text-sm font-bold text-zinc-900">
+                {formatKoreanWon(myInvestment)}
+              </p>
+            </div>
+            <div className="h-8 w-px bg-zinc-200" />
+            <div>
+              <p className="text-[11px] text-zinc-400">LTV</p>
+              <p className="tabular-nums mt-0.5 text-sm font-semibold text-zinc-700">
+                {Math.round((loanAmount / totalCost) * 100)}%
+              </p>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* 층별 시세 분석 */}
+      {/* 시세별 수익 분석 */}
       <div className="mb-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="text-[15px] font-semibold text-zinc-900">시세별 수익 분석</h2>
@@ -291,11 +263,32 @@ export default async function ResultPage({ searchParams }: Props) {
         </div>
 
         {hasPrice ? (
-          <div className="flex gap-2">
-            <PriceCard label="저층" marketPrice={priceAnalysis.low}  baseCost={baseCost} />
-            <PriceCard label="중층" marketPrice={priceAnalysis.mid}  baseCost={baseCost} />
-            <PriceCard label="고층" marketPrice={priceAnalysis.high} baseCost={baseCost} />
-          </div>
+          <>
+            <div className="flex gap-2">
+              <PriceCard
+                label="저층"
+                marketPrice={priceAnalysis.low}
+                baseCost={baseCost}
+                myInvestment={myInvestment}
+              />
+              <PriceCard
+                label="중층"
+                marketPrice={priceAnalysis.mid}
+                baseCost={baseCost}
+                myInvestment={myInvestment}
+              />
+              <PriceCard
+                label="고층"
+                marketPrice={priceAnalysis.high}
+                baseCost={baseCost}
+                myInvestment={myInvestment}
+              />
+            </div>
+            <p className="mt-3 text-[11px] text-zinc-400">
+              * 수익 = 매도가 − 취득가 − 중개수수료 (대출이자·중도상환수수료 별도)
+              {loanAmount > 0 && " · 투자금 대비 수익률은 실투자금 기준"}
+            </p>
+          </>
         ) : (
           <div className="rounded-xl bg-zinc-50 px-4 py-5">
             <p className="text-sm text-zinc-500">해당 단지·평형의 최근 6개월 실거래 데이터가 없습니다.</p>
@@ -321,14 +314,14 @@ export default async function ResultPage({ searchParams }: Props) {
           <div className="border-t border-zinc-100 pt-2.5">
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">부대비용</p>
             <div className="space-y-2">
-              <CostRow label="법무사 비용"    value={row.legal_fee ?? 0}          indent />
-              <CostRow label="명도비용"       value={row.eviction_cost ?? 0}       indent />
-              <CostRow label="미납관리비"     value={row.unpaid_maintenance ?? 0}  indent />
-              <CostRow label="인테리어 비용"  value={row.interior_cost ?? 0}       indent />
-              <CostRow label="대출이자 (1년)" value={loanInterest}                 indent />
-              <CostRow label="대출수수료"     value={row.loan_fee ?? 0}            indent />
-              <CostRow label="중도상환수수료" value={prepaymentPenalty}            indent />
-              <CostRow label="강제집행 비용"  value={row.enforcement_cost ?? 0}    indent />
+              <CostRow label="법무사 비용"    value={row.legal_fee ?? 0}         indent />
+              <CostRow label="명도비용"       value={row.eviction_cost ?? 0}      indent />
+              <CostRow label="미납관리비"     value={row.unpaid_maintenance ?? 0} indent />
+              <CostRow label="인테리어 비용"  value={row.interior_cost ?? 0}      indent />
+              <CostRow label="대출이자"       value={loanInterest}                indent />
+              <CostRow label="대출수수료"     value={row.loan_fee ?? 0}           indent />
+              <CostRow label="중도상환수수료" value={prepaymentPenalty}           indent />
+              <CostRow label="강제집행 비용"  value={row.enforcement_cost ?? 0}   indent />
             </div>
           </div>
 
@@ -336,11 +329,10 @@ export default async function ResultPage({ searchParams }: Props) {
             <CostRow label="최종 취득가" value={totalCost} bold />
           </div>
 
-          {/* 수익 계산 기준 취득가 별도 표시 */}
           {(loanInterest > 0 || prepaymentPenalty > 0) && (
             <div className="rounded-lg bg-zinc-50 px-3 py-2.5">
               <p className="text-xs text-zinc-500">
-                수익률 계산 기준 취득가{" "}
+                수익 계산 기준 취득가{" "}
                 <span className="tabular-nums font-semibold text-zinc-700">
                   {formatManwon(baseCost)}
                 </span>
