@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     ? query.ilike("apt_name", `%${q.trim()}%`)
     : query;
 
-  const { data, error } = await filtered.limit(500);
+  // limit 500 → 3000으로 상향: 많은 지역에서 아파트 누락 방지
+  const { data, error } = await filtered.limit(3000);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

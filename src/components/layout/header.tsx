@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OneWattLogoMark } from "@/components/ui/logo";
 
 export function Header() {
   return (
@@ -6,14 +7,13 @@ export function Header() {
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
         <Link
           href="/"
-          className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-zinc-900 transition-opacity hover:opacity-70"
-          aria-label="경매 분석기 홈"
+          className="flex items-center gap-2.5 transition-opacity hover:opacity-70"
+          aria-label="1Watt 홈"
         >
-          {/* 로고 마크 */}
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-zinc-900 text-[11px] font-bold text-white">
-            경
+          <OneWattLogoMark size={28} />
+          <span className="text-[15px] font-bold tracking-tight text-zinc-900">
+            1Watt
           </span>
-          경매 분석기
         </Link>
 
         <nav className="flex items-center gap-1">
