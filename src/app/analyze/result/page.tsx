@@ -244,7 +244,7 @@ export default async function ResultPage({ searchParams }: Props) {
             <div>
               <p className="text-[11px] text-zinc-400">LTV</p>
               <p className="tabular-nums mt-0.5 text-sm font-semibold text-zinc-700">
-                {Math.round((loanAmount / totalCost) * 100)}%
+                {Math.round((loanAmount / row.bid_price) * 100)}%
               </p>
             </div>
           </div>

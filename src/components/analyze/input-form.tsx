@@ -13,19 +13,19 @@ interface AptResult { name: string; count: number }
 interface AreaOption { exclusive_area: number; label: string }
 
 interface CostState {
-  legalFee: number;              // 법무사 비용 만원 (기본 80)
-  evictionCostPerPyeong: number; // 명도비용 만원/평 (기본 10)
-  unpaidMaintenance: number;     // 미납관리비 만원 (기본 100)
-  interiorCost: number;          // 인테리어 비용 만원 (기본 0)
-  loanLtv: number;               // 대출 LTV % (기본 70)
-  loanRate: number;              // 대출 금리 % (기본 4.8)
-  loanFeeRate: number;           // 대출수수료 % (기본 0.7)
-  prepaymentRate: number;        // 중도상환수수료 % (기본 1.4)
+  legalFee: number;       // 법무사 비용 만원 (기본 80)
+  evictionCost: number;   // 명도비용 만원 총액 (기본 300)
+  unpaidMaintenance: number; // 미납관리비 만원 (기본 100)
+  interiorCost: number;   // 인테리어 비용 만원 (기본 0)
+  loanLtv: number;        // 대출 LTV % (기본 70)
+  loanRate: number;       // 대출 금리 % (기본 4.8)
+  loanFeeRate: number;    // 대출수수료 % (기본 0.7)
+  prepaymentRate: number; // 중도상환수수료 % (기본 1.4)
 }
 
 const DEFAULT_COSTS: CostState = {
   legalFee: 80,
-  evictionCostPerPyeong: 10,
+  evictionCost: 300,
   unpaidMaintenance: 100,
   interiorCost: 0,
   loanLtv: 70,
@@ -325,11 +325,10 @@ export function AuctionInputForm() {
 
     const bid = Number(bidPrice);
     const months = Math.max(1, Number(holdMonths) || 12);
-    const areaPyeong = Number(selectedArea) * 0.3025;
     const loanPrincipal = bid * (costs.loanLtv / 100);
 
     // 파생 계산값
-    const evictionCost    = Math.round(costs.evictionCostPerPyeong * areaPyeong);
+    const evictionCost    = costs.evictionCost;
     const loanAmount      = Math.round(loanPrincipal); // 대출 원금 (만원)
     const loanInterest    = Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)); // 보유 개월 기준
     const loanFee         = Math.round(loanPrincipal * (costs.loanFeeRate / 100));
@@ -394,11 +393,10 @@ export function AuctionInputForm() {
   // 부대비용 미리보기 (합계)
   const bid = Number(bidPrice) || 0;
   const months = Math.max(1, Number(holdMonths) || 12);
-  const areaPyeong = Number(selectedArea) * 0.3025;
   const loanPrincipal = bid * (costs.loanLtv / 100);
   const totalAdditional =
     costs.legalFee +
-    Math.round(costs.evictionCostPerPyeong * areaPyeong) +
+    costs.evictionCost +
     costs.unpaidMaintenance +
     costs.interiorCost +
     Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)) +
@@ -586,10 +584,10 @@ export function AuctionInputForm() {
                     <FormInput
                       id="eviction"
                       type="number"
-                      value={costs.evictionCostPerPyeong}
-                      onChange={(e) => setCosts((c) => ({ ...c, evictionCostPerPyeong: Number(e.target.value) }))}
+                      value={costs.evictionCost}
+                      onChange={(e) => setCosts((c) => ({ ...c, evictionCost: Number(e.target.value) }))}
                       min={0}
-                      suffix="만원/평"
+                      suffix="만원"
                     />
                   </div>
                   {/* 미납관리비 */}
