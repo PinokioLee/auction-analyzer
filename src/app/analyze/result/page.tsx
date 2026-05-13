@@ -68,9 +68,9 @@ function PriceCard({
 }) {
   if (marketPrice === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
-        <span className="text-xs font-medium text-zinc-400">{label} 시세</span>
-        <span className="ml-2 text-xs text-zinc-400">데이터 없음</span>
+      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 sm:flex-1">
+        <p className="text-xs font-medium text-zinc-400">{label} 시세</p>
+        <p className="mt-2 text-xs text-zinc-400">데이터 없음</p>
       </div>
     );
   }
@@ -84,73 +84,96 @@ function PriceCard({
     : null;
   const baseROI = Math.round((profit / baseCost) * 1000) / 10;
 
+  const colorText = positive ? "text-red-600" : "text-blue-600";
+  const colorSub  = positive ? "text-red-400" : "text-blue-400";
+
   return (
     <div className={cn(
-      "rounded-xl border px-4 py-3",
+      "rounded-xl border sm:flex-1",
       positive ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"
     )}>
-      <div className="flex items-center justify-between gap-3">
 
-        {/* 왼쪽: 층 구분 + 시세 */}
-        <div className="min-w-0 shrink-0">
-          <p className="text-[11px] font-medium text-zinc-500">{label} 시세</p>
-          <p className="tabular-nums mt-0.5 text-[15px] font-bold text-zinc-900 leading-tight whitespace-nowrap">
+      {/* ── 모바일: 가로형 한 줄 카드 (sm 미만) ── */}
+      <div className="flex items-center gap-2 px-3 py-3 sm:hidden">
+        {/* 시세 */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-zinc-500">{label} 시세</p>
+          <p className="tabular-nums text-[13px] font-bold text-zinc-900 leading-tight">
             {formatKoreanWon(marketPrice)}
           </p>
         </div>
 
-        {/* 오른쪽: 수익 지표들 */}
-        <div className="flex items-center gap-3 shrink-0 ml-auto">
-          {/* 내 투자금 (대출 있을 때만) */}
-          {hasLoan && (
-            <div className="text-right">
-              <p className="text-[10px] text-zinc-400">내 투자금</p>
-              <p className="tabular-nums text-[11px] font-medium text-zinc-600 whitespace-nowrap">
-                {formatManwon(myInvestment)}
-              </p>
-            </div>
+        <div className="h-6 w-px bg-black/10 shrink-0" />
+
+        {/* 수익 */}
+        <div className="text-right shrink-0">
+          <p className="text-[10px] text-zinc-400">수익</p>
+          <p className={cn("tabular-nums text-[12px] font-bold", colorText)}>
+            {positive ? "+" : ""}{formatManwon(profit)}
+          </p>
+        </div>
+
+        <div className="h-6 w-px bg-black/10 shrink-0" />
+
+        {/* 수익률 */}
+        <div className="text-right shrink-0">
+          <p className="text-[10px] text-zinc-400">
+            {hasLoan && investmentROI !== null ? "투자금대비" : "수익률"}
+          </p>
+          <p className={cn("tabular-nums text-[15px] font-bold", colorText)}>
+            {positive ? "+" : ""}
+            {hasLoan && investmentROI !== null ? investmentROI : baseROI}%
+          </p>
+          {hasLoan && investmentROI !== null && (
+            <p className={cn("tabular-nums text-[10px]", colorSub)}>
+              취득가 {positive ? "+" : ""}{baseROI}%
+            </p>
           )}
-
-          {/* 구분선 */}
-          {hasLoan && <div className="h-7 w-px bg-black/10 shrink-0" />}
-
-          {/* 수익 */}
-          <div className="text-right">
-            <p className="text-[10px] text-zinc-400">수익</p>
-            <p className={cn(
-              "tabular-nums text-[13px] font-bold whitespace-nowrap",
-              positive ? "text-red-600" : "text-blue-600"
-            )}>
-              {positive ? "+" : ""}{formatManwon(profit)}
-            </p>
-          </div>
-
-          {/* 구분선 */}
-          <div className="h-7 w-px bg-black/10 shrink-0" />
-
-          {/* 수익률 */}
-          <div className="text-right">
-            <p className="text-[10px] text-zinc-400">
-              {hasLoan && investmentROI !== null ? "투자금대비" : "수익률"}
-            </p>
-            <p className={cn(
-              "tabular-nums text-[15px] font-bold",
-              positive ? "text-red-600" : "text-blue-600"
-            )}>
-              {positive ? "+" : ""}
-              {hasLoan && investmentROI !== null ? investmentROI : baseROI}%
-            </p>
-            {hasLoan && investmentROI !== null && (
-              <p className={cn(
-                "tabular-nums text-[10px]",
-                positive ? "text-red-400" : "text-blue-400"
-              )}>
-                취득가 {positive ? "+" : ""}{baseROI}%
-              </p>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* ── 데스크탑: 세로형 카드 (sm 이상) ── */}
+      <div className="hidden sm:block p-4">
+        <p className="text-xs font-medium text-zinc-500">{label} 시세</p>
+        <p className="tabular-nums mt-1 text-[17px] font-bold text-zinc-900 leading-tight">
+          {formatKoreanWon(marketPrice)}
+        </p>
+        <div className="my-3 border-t border-black/8" />
+        <div className="space-y-1.5">
+          {hasLoan && (
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-zinc-500">내 투자금</span>
+              <span className="tabular-nums text-[11px] font-medium text-zinc-700">
+                {formatManwon(myInvestment)}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-zinc-500">수익</span>
+            <span className={cn("tabular-nums text-[12px] font-bold", colorText)}>
+              {positive ? "+" : ""}{formatManwon(profit)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-zinc-500">
+              {hasLoan && investmentROI !== null ? "투자금 대비" : "수익률"}
+            </span>
+            <span className={cn("tabular-nums text-sm font-bold", colorText)}>
+              {positive ? "+" : ""}
+              {hasLoan && investmentROI !== null ? investmentROI : baseROI}%
+            </span>
+          </div>
+          {hasLoan && investmentROI !== null && (
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-zinc-400">취득가 대비</span>
+              <span className={cn("tabular-nums text-[11px]", colorSub)}>
+                {positive ? "+" : ""}{baseROI}%
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }
@@ -289,7 +312,7 @@ export default async function ResultPage({ searchParams }: Props) {
 
         {hasPrice ? (
           <>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <PriceCard
                 label="저층"
                 marketPrice={priceAnalysis.low}
