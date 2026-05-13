@@ -57,6 +57,7 @@ function CostRow({
 
 function PriceCard({
   label,
+  floorRange,
   marketPrice,
   minPrice,
   maxPrice,
@@ -65,6 +66,7 @@ function PriceCard({
   myInvestment,
 }: {
   label: string;
+  floorRange: string;   // e.g. "1~6층"
   marketPrice: number;  // 평균가 (수익 계산 기준)
   minPrice: number;
   maxPrice: number;
@@ -104,7 +106,7 @@ function PriceCard({
         <div className="flex-1 min-w-0">
           <p className="text-[11px] text-zinc-500 mb-1">
             {label} 시세
-            <span className="ml-1 text-zinc-400">· {count}건</span>
+            <span className="ml-1 text-zinc-400">({floorRange}) · {count}건</span>
           </p>
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
@@ -213,6 +215,14 @@ export default async function ResultPage({ searchParams }: Props) {
   // 실투자금 = 취득가 - 대출금액
   const myInvestment = totalCost - loanAmount;
 
+  // 층 구분 기준 계산 (analyzePriceByFloor 와 동일 로직)
+  const totalFloorNum   = row.total_floors ?? 20;
+  const lowFloorMax     = Math.floor(totalFloorNum * 0.33);
+  const midFloorMax     = Math.floor(totalFloorNum * 0.66);
+  const lowRange  = `1~${lowFloorMax}층`;
+  const midRange  = `${lowFloorMax + 1}~${midFloorMax}층`;
+  const highRange = `${midFloorMax + 1}~${totalFloorNum}층`;
+
   // 명도비용 breakdown (평당 역산)
   const areaPyeong      = Math.round(row.area * 0.3025 * 10) / 10;
   const evictionPerPyeong = areaPyeong > 0 && evictionCost > 0
@@ -301,6 +311,7 @@ export default async function ResultPage({ searchParams }: Props) {
               {(priceAnalysis.lowCount ?? 0) > 0 && (
                 <PriceCard
                   label="저층"
+                  floorRange={lowRange}
                   marketPrice={priceAnalysis.low}
                   minPrice={priceAnalysis.lowMin ?? 0}
                   maxPrice={priceAnalysis.lowMax ?? 0}
@@ -312,6 +323,7 @@ export default async function ResultPage({ searchParams }: Props) {
               {(priceAnalysis.midCount ?? 0) > 0 && (
                 <PriceCard
                   label="중층"
+                  floorRange={midRange}
                   marketPrice={priceAnalysis.mid}
                   minPrice={priceAnalysis.midMin ?? 0}
                   maxPrice={priceAnalysis.midMax ?? 0}
@@ -323,6 +335,7 @@ export default async function ResultPage({ searchParams }: Props) {
               {(priceAnalysis.highCount ?? 0) > 0 && (
                 <PriceCard
                   label="고층"
+                  floorRange={highRange}
                   marketPrice={priceAnalysis.high}
                   minPrice={priceAnalysis.highMin ?? 0}
                   maxPrice={priceAnalysis.highMax ?? 0}
