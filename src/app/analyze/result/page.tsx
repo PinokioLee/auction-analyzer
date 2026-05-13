@@ -88,7 +88,7 @@ function PriceCard({
   return (
     <div className={cn(
       "flex-1 rounded-xl border p-4",
-      positive ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"
+      positive ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"
     )}>
       {/* 시세 */}
       <p className="text-xs font-medium text-zinc-500">{label} 시세</p>
@@ -113,7 +113,7 @@ function PriceCard({
           <span className="text-[11px] text-zinc-500">수익</span>
           <span className={cn(
             "tabular-nums text-[12px] font-bold",
-            positive ? "text-emerald-700" : "text-red-600"
+            positive ? "text-red-600" : "text-blue-600"
           )}>
             {positive ? "+" : ""}{formatManwon(profit)}
           </span>
@@ -124,7 +124,7 @@ function PriceCard({
           </span>
           <span className={cn(
             "tabular-nums text-sm font-bold",
-            positive ? "text-emerald-700" : "text-red-600"
+            positive ? "text-red-600" : "text-blue-600"
           )}>
             {hasLoan && investmentROI !== null ? (
               <>{positive ? "+" : ""}{investmentROI}%</>
@@ -138,7 +138,7 @@ function PriceCard({
             <span className="text-[11px] text-zinc-400">취득가 대비</span>
             <span className={cn(
               "tabular-nums text-[11px]",
-              positive ? "text-emerald-600" : "text-red-500"
+              positive ? "text-red-500" : "text-blue-500"
             )}>
               {positive ? "+" : ""}{Math.round((profit / baseCost) * 1000) / 10}%
             </span>
