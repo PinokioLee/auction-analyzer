@@ -24,14 +24,16 @@ export async function POST(request: NextRequest) {
     floor,
     totalFloors,
     bidPrice,
-    legalFee = 50,
-    evictionCost = 300,
-    unpaidMaintenance = 0,
-    loanInterest = 0,
-    enforcementCost = 0,
+    legalFee          = 80,
+    evictionCost      = 0,
+    unpaidMaintenance = 100,
+    interiorCost      = 0,
+    loanInterest      = 0,
+    loanFee           = 0,
+    prepaymentPenalty = 0,
+    enforcementCost   = 0,
   } = body as Record<string, unknown>;
 
-  // 필수값 검증
   if (
     typeof lawdCd !== "string" || !lawdCd ||
     typeof aptName !== "string" || !aptName.trim() ||
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // ① 자체 DB에서 실거래가 조회 (최근 6개월)
+  // ① 실거래가 조회 (최근 6개월)
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   const cutoff = sixMonthsAgo.toISOString().slice(0, 10);
@@ -81,7 +83,10 @@ export async function POST(request: NextRequest) {
     (legalFee as number) +
     (evictionCost as number) +
     (unpaidMaintenance as number) +
+    (interiorCost as number) +
     (loanInterest as number) +
+    (loanFee as number) +
+    (prepaymentPenalty as number) +
     (enforcementCost as number);
   const totalCost = (bidPrice as number) + taxResult.total + additionalSum;
 
@@ -93,7 +98,10 @@ export async function POST(request: NextRequest) {
     legalFee: legalFee as number,
     evictionCost: evictionCost as number,
     unpaidMaintenance: unpaidMaintenance as number,
+    interiorCost: interiorCost as number,
     loanInterest: loanInterest as number,
+    loanFee: loanFee as number,
+    prepaymentPenalty: prepaymentPenalty as number,
     enforcementCost: enforcementCost as number,
     totalCost,
   };
@@ -118,21 +126,22 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from("analysis_history")
       .insert({
-        apartment_name: (aptName as string).trim(),
-        area: exclusiveArea as number,
-        floor: (typeof floor === "number" ? floor : 1),
-        total_floors: totalFloorNum,
-        bid_price: bidPrice as number,
-        acquisition_tax: taxResult.total,
-        legal_fee: legalFee as number,
-        eviction_cost: evictionCost as number,
+        apartment_name:     (aptName as string).trim(),
+        area:               exclusiveArea as number,
+        floor:              typeof floor === "number" ? floor : 1,
+        total_floors:       totalFloorNum,
+        bid_price:          bidPrice as number,
+        acquisition_tax:    taxResult.total,
+        legal_fee:          legalFee as number,
+        eviction_cost:      evictionCost as number,
         unpaid_maintenance: unpaidMaintenance as number,
-        loan_interest: loanInterest as number,
-        enforcement_cost: enforcementCost as number,
-        total_cost: totalCost,
-        price_analysis: JSON.parse(
-          JSON.stringify({ ...priceAnalysis, dataSource, lawdCd })
-        ),
+        interior_cost:      interiorCost as number,
+        loan_interest:      loanInterest as number,
+        loan_fee:           loanFee as number,
+        prepayment_penalty: prepaymentPenalty as number,
+        enforcement_cost:   enforcementCost as number,
+        total_cost:         totalCost,
+        price_analysis:     JSON.parse(JSON.stringify({ ...priceAnalysis, dataSource, lawdCd })),
       })
       .select("id")
       .single();

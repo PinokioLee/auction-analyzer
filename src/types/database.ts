@@ -50,8 +50,11 @@ export type Database = {
           eviction_cost: number | null
           floor: number
           id: string
+          interior_cost: number | null
           legal_fee: number | null
+          loan_fee: number | null
           loan_interest: number | null
+          prepayment_penalty: number | null
           price_analysis: Json | null
           total_cost: number | null
           total_floors: number
@@ -67,8 +70,11 @@ export type Database = {
           eviction_cost?: number | null
           floor: number
           id?: string
+          interior_cost?: number | null
           legal_fee?: number | null
+          loan_fee?: number | null
           loan_interest?: number | null
+          prepayment_penalty?: number | null
           price_analysis?: Json | null
           total_cost?: number | null
           total_floors: number
@@ -84,8 +90,11 @@ export type Database = {
           eviction_cost?: number | null
           floor?: number
           id?: string
+          interior_cost?: number | null
           legal_fee?: number | null
+          loan_fee?: number | null
           loan_interest?: number | null
+          prepayment_penalty?: number | null
           price_analysis?: Json | null
           total_cost?: number | null
           total_floors?: number
