@@ -11,6 +11,7 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import { fetchMolit, normalizeItem } from "./molit-client";
 import type { NormalizedItem } from "./molit-client";
 
@@ -19,7 +20,8 @@ import regions from "../public/data/region-codes.json";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { realtime: { transport: ws } }  // Node.js < 22 WebSocket 호환
 );
 
 const DAILY_LIMIT = 9_500; // 일 10,000건 제한 안전 마진
