@@ -147,14 +147,6 @@ export function analyzePriceByFloor(
   const maxPrice = (items: AptTransaction[]) =>
     items.length === 0 ? 0 : Math.max(...items.map((t) => t.dealAmount));
 
-  const overallAvg = avg(transactions);
-  const overallMin = minPrice(transactions);
-  const overallMax = maxPrice(transactions);
-
-  const low  = avg(buckets.low)  || overallAvg;
-  const mid  = avg(buckets.mid)  || overallAvg;
-  const high = avg(buckets.high) || overallAvg;
-
   // 기간 문자열 생성
   const now = new Date();
   const end = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -162,15 +154,18 @@ export function analyzePriceByFloor(
   const start = `${startDate.getFullYear()}.${String(startDate.getMonth() + 1).padStart(2, "0")}`;
 
   return {
-    low,  mid,  high,
-    lowMin:   buckets.low.length  > 0 ? minPrice(buckets.low)  : overallMin,
-    lowMax:   buckets.low.length  > 0 ? maxPrice(buckets.low)  : overallMax,
+    // 거래 없는 tier는 0 반환 (fallback 없음)
+    low:  avg(buckets.low),
+    mid:  avg(buckets.mid),
+    high: avg(buckets.high),
+    lowMin:   buckets.low.length  > 0 ? minPrice(buckets.low)  : 0,
+    lowMax:   buckets.low.length  > 0 ? maxPrice(buckets.low)  : 0,
     lowCount: buckets.low.length,
-    midMin:   buckets.mid.length  > 0 ? minPrice(buckets.mid)  : overallMin,
-    midMax:   buckets.mid.length  > 0 ? maxPrice(buckets.mid)  : overallMax,
+    midMin:   buckets.mid.length  > 0 ? minPrice(buckets.mid)  : 0,
+    midMax:   buckets.mid.length  > 0 ? maxPrice(buckets.mid)  : 0,
     midCount: buckets.mid.length,
-    highMin:  buckets.high.length > 0 ? minPrice(buckets.high) : overallMin,
-    highMax:  buckets.high.length > 0 ? maxPrice(buckets.high) : overallMax,
+    highMin:  buckets.high.length > 0 ? minPrice(buckets.high) : 0,
+    highMax:  buckets.high.length > 0 ? maxPrice(buckets.high) : 0,
     highCount: buckets.high.length,
     dataCount: transactions.length,
     period: `${start} ~ ${end}`,

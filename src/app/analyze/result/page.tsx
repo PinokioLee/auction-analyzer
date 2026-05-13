@@ -298,33 +298,39 @@ export default async function ResultPage({ searchParams }: Props) {
         {hasPrice ? (
           <>
             <div className="flex flex-col gap-2">
-              <PriceCard
-                label="저층"
-                marketPrice={priceAnalysis.low}
-                minPrice={priceAnalysis.lowMin ?? 0}
-                maxPrice={priceAnalysis.lowMax ?? 0}
-                count={priceAnalysis.lowCount ?? 0}
-                baseCost={baseCost}
-                myInvestment={myInvestment}
-              />
-              <PriceCard
-                label="중층"
-                marketPrice={priceAnalysis.mid}
-                minPrice={priceAnalysis.midMin ?? 0}
-                maxPrice={priceAnalysis.midMax ?? 0}
-                count={priceAnalysis.midCount ?? 0}
-                baseCost={baseCost}
-                myInvestment={myInvestment}
-              />
-              <PriceCard
-                label="고층"
-                marketPrice={priceAnalysis.high}
-                minPrice={priceAnalysis.highMin ?? 0}
-                maxPrice={priceAnalysis.highMax ?? 0}
-                count={priceAnalysis.highCount ?? 0}
-                baseCost={baseCost}
-                myInvestment={myInvestment}
-              />
+              {(priceAnalysis.lowCount ?? 0) > 0 && (
+                <PriceCard
+                  label="저층"
+                  marketPrice={priceAnalysis.low}
+                  minPrice={priceAnalysis.lowMin ?? 0}
+                  maxPrice={priceAnalysis.lowMax ?? 0}
+                  count={priceAnalysis.lowCount ?? 0}
+                  baseCost={baseCost}
+                  myInvestment={myInvestment}
+                />
+              )}
+              {(priceAnalysis.midCount ?? 0) > 0 && (
+                <PriceCard
+                  label="중층"
+                  marketPrice={priceAnalysis.mid}
+                  minPrice={priceAnalysis.midMin ?? 0}
+                  maxPrice={priceAnalysis.midMax ?? 0}
+                  count={priceAnalysis.midCount ?? 0}
+                  baseCost={baseCost}
+                  myInvestment={myInvestment}
+                />
+              )}
+              {(priceAnalysis.highCount ?? 0) > 0 && (
+                <PriceCard
+                  label="고층"
+                  marketPrice={priceAnalysis.high}
+                  minPrice={priceAnalysis.highMin ?? 0}
+                  maxPrice={priceAnalysis.highMax ?? 0}
+                  count={priceAnalysis.highCount ?? 0}
+                  baseCost={baseCost}
+                  myInvestment={myInvestment}
+                />
+              )}
             </div>
             <p className="mt-3 text-[11px] text-zinc-400">
               * 수익 = 매도가 − 취득가 − 중개수수료 (대출이자·중도상환수수료 별도)
