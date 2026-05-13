@@ -31,19 +31,24 @@ function calcBrokerage(salePriceManwon: number): number {
 // ── CostRow ────────────────────────────────────────
 
 function CostRow({
-  label, value, bold, indent,
+  label, value, bold, indent, detail,
 }: {
-  label: string; value: number; bold?: boolean; indent?: boolean;
+  label: string; value: number; bold?: boolean; indent?: boolean; detail?: string;
 }) {
   if (value === 0 && !bold) return null;
   return (
-    <div className={cn("flex justify-between text-sm", indent && "pl-4")}>
-      <span className={cn("text-zinc-600", bold && "font-semibold text-zinc-900", indent && "text-zinc-500")}>
-        {label}
-      </span>
-      <span className={cn("tabular-nums", bold ? "font-bold text-zinc-900" : "text-zinc-700")}>
-        {formatManwon(value)}
-      </span>
+    <div className={cn(indent && "pl-4")}>
+      <div className="flex justify-between text-sm">
+        <span className={cn("text-zinc-600", bold && "font-semibold text-zinc-900", indent && "text-zinc-500")}>
+          {label}
+        </span>
+        <span className={cn("tabular-nums", bold ? "font-bold text-zinc-900" : "text-zinc-700")}>
+          {formatManwon(value)}
+        </span>
+      </div>
+      {detail && (
+        <p className="tabular-nums mt-0.5 text-[11px] text-zinc-400">{detail}</p>
+      )}
     </div>
   );
 }
@@ -178,6 +183,7 @@ export default async function ResultPage({ searchParams }: Props) {
   const priceAnalysis = row.price_analysis as {
     low: number; mid: number; high: number;
     dataCount: number; period: string; dataSource?: string;
+    holdMonths?: number; loanRate?: number;
   } | null;
 
   const totalCost          = row.total_cost ?? row.bid_price;
@@ -185,12 +191,25 @@ export default async function ResultPage({ searchParams }: Props) {
   const loanInterest       = row.loan_interest ?? 0;
   const prepaymentPenalty  = row.prepayment_penalty ?? 0;
   const loanAmount         = row.loan_amount ?? 0;
+  const evictionCost       = row.eviction_cost ?? 0;
   const hasPrice           = priceAnalysis && priceAnalysis.dataCount > 0;
 
   // 수익 계산 기준 취득가 (대출이자·중도상환수수료 제외)
   const baseCost = totalCost - loanInterest - prepaymentPenalty;
   // 실투자금 = 취득가 - 대출금액
   const myInvestment = totalCost - loanAmount;
+
+  // 명도비용 breakdown (평당 역산)
+  const areaPyeong      = Math.round(row.area * 0.3025 * 10) / 10;
+  const evictionPerPyeong = areaPyeong > 0 && evictionCost > 0
+    ? Math.round(evictionCost / areaPyeong)
+    : 0;
+
+  // 대출이자 breakdown
+  const holdMonths    = priceAnalysis?.holdMonths ?? 0;
+  const monthlyInterest = holdMonths > 0 && loanInterest > 0
+    ? Math.round(loanInterest / holdMonths)
+    : 0;
 
   return (
     <div className="mx-auto max-w-[640px] px-4 py-10">
@@ -315,10 +334,24 @@ export default async function ResultPage({ searchParams }: Props) {
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">부대비용</p>
             <div className="space-y-2">
               <CostRow label="법무사 비용"    value={row.legal_fee ?? 0}         indent />
-              <CostRow label="명도비용"       value={row.eviction_cost ?? 0}      indent />
+              <CostRow
+                label="명도비용(평당)"
+                value={evictionCost}
+                indent
+                detail={evictionPerPyeong > 0
+                  ? `${areaPyeong}평 × ${evictionPerPyeong}만원/평`
+                  : undefined}
+              />
               <CostRow label="미납관리비"     value={row.unpaid_maintenance ?? 0} indent />
               <CostRow label="인테리어 비용"  value={row.interior_cost ?? 0}      indent />
-              <CostRow label="대출이자"       value={loanInterest}                indent />
+              <CostRow
+                label="대출이자"
+                value={loanInterest}
+                indent
+                detail={monthlyInterest > 0 && holdMonths > 0
+                  ? `월 ${monthlyInterest.toLocaleString()}만원 × ${holdMonths}개월`
+                  : undefined}
+              />
               <CostRow label="대출수수료"     value={row.loan_fee ?? 0}           indent />
               <CostRow label="중도상환수수료" value={prepaymentPenalty}           indent />
               <CostRow label="강제집행 비용"  value={row.enforcement_cost ?? 0}   indent />

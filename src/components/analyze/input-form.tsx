@@ -161,6 +161,7 @@ function AptAutocomplete({
   const [selected, setSelected] = useState("");
   const [activeIdx, setActiveIdx] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef   = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -176,18 +177,30 @@ function AptAutocomplete({
 
   useEffect(() => {
     setQuery(""); setSelected(""); setResults([]); setOpen(false);
+    abortRef.current?.abort();
   }, [lawdCd]);
 
   const search = useCallback(async (q: string) => {
     if (!lawdCd || q.trim().length < 1) { setResults([]); setOpen(false); return; }
+
+    // 이전 요청 취소 (race condition 방지)
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     try {
-      const res = await fetch(`/api/apartments?lawdCd=${lawdCd}&q=${encodeURIComponent(q.trim())}`);
+      const res = await fetch(
+        `/api/apartments?lawdCd=${lawdCd}&q=${encodeURIComponent(q.trim())}`,
+        { signal: controller.signal }
+      );
       const data: AptResult[] = await res.json();
       setResults(data);
       setOpen(data.length > 0);
       setActiveIdx(-1);
-    } catch {
+    } catch (err) {
+      // AbortError는 의도적 취소 — 상태 변경 금지
+      if (err instanceof Error && err.name === "AbortError") return;
       setResults([]); setOpen(false);
     } finally {
       setLoading(false);
@@ -357,6 +370,8 @@ export function AuctionInputForm() {
           loanFee,
           prepaymentPenalty,
           enforcementCost: 0,
+          holdMonths: months,       // 대출이자 breakdown 표시용
+          loanRate: costs.loanRate, // 대출이자 breakdown 표시용
         }),
       });
 

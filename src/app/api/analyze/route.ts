@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
     loanFee           = 0,
     prepaymentPenalty = 0,
     enforcementCost   = 0,
+    holdMonths        = 12,
+    loanRate          = 0,
   } = body as Record<string, unknown>;
 
   if (
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
         prepayment_penalty: prepaymentPenalty as number,
         enforcement_cost:   enforcementCost as number,
         total_cost:         totalCost,
-        price_analysis:     JSON.parse(JSON.stringify({ ...priceAnalysis, dataSource, lawdCd })),
+        price_analysis:     JSON.parse(JSON.stringify({ ...priceAnalysis, dataSource, lawdCd, holdMonths, loanRate })),
       })
       .select("id")
       .single();
