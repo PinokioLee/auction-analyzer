@@ -73,7 +73,8 @@ async function fetchMonthlyTransactions(
   const data: ApiResponse = await res.json();
   const { resultCode, resultMsg } = data.response.header;
 
-  if (resultCode !== "00") {
+  // 정상 코드: "00" (구 API) 또는 "000" (신 API)
+  if (resultCode !== "00" && resultCode !== "000") {
     throw new Error(`국토부 API 에러코드 ${resultCode}: ${resultMsg}`);
   }
 
