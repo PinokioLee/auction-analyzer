@@ -5,7 +5,7 @@
  */
 
 const ENDPOINT =
-  "http://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev";
+  "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev";
 
 // ── 원시 응답 타입 ─────────────────────────────────
 

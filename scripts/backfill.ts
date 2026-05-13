@@ -27,12 +27,12 @@ const supabase = createClient(
 const DAILY_LIMIT = 9_500; // 일 10,000건 제한 안전 마진
 const DELAY_MS = 210;      // 초당 ~4.7건
 
-// ── 대상 YYYYMM 목록 (최근 36개월) ───────────────
+// ── 대상 YYYYMM 목록 (최근 240개월 = 20년) ──────────
 
 function getTargetYmds(): string[] {
   const result: string[] = [];
   const now = new Date();
-  for (let i = 0; i < 36; i++) {
+  for (let i = 0; i < 240; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     result.push(
       String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, "0")
