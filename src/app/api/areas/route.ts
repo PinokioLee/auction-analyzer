@@ -26,11 +26,16 @@ export async function GET(req: NextRequest) {
     (a, b) => a - b
   );
 
-  const result = unique.map((area) => ({
-    exclusive_area: area,
-    pyeong: Math.round(area * 0.3025 * 10) / 10,
-    label: `전용 ${area}㎡ (약 ${Math.round(area * 0.3025)}평)`,
-  }));
+  const result = unique.map((area) => {
+    const pyeong = Math.round(area * 0.3025 * 10) / 10;
+    // 소수점 2자리까지 표시하여 같은 "84평형"이라도 타입 구분 가능
+    const areaDisplay = Number.isInteger(area) ? `${area}` : area.toFixed(2);
+    return {
+      exclusive_area: area,
+      pyeong,
+      label: `전용 ${areaDisplay}㎡ (${pyeong}평)`,
+    };
+  });
 
   return NextResponse.json(result, {
     headers: { "Cache-Control": "public, max-age=300" },

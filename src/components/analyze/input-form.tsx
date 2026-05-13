@@ -283,6 +283,7 @@ export function AuctionInputForm() {
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [selectedArea, setSelectedArea] = useState("");
   const [bidPrice, setBidPrice] = useState("");
+  const [holdMonths, setHoldMonths] = useState("12"); // 매도 희망일 (개월)
   const [costs, setCosts] = useState<CostState>(DEFAULT_COSTS);
   const [showCosts, setShowCosts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -320,15 +321,16 @@ export function AuctionInputForm() {
     if (!lawdCd)       { toast.error("시/군/구를 선택해주세요."); return; }
     if (!aptName)      { toast.error("아파트명을 입력해주세요."); return; }
     if (!selectedArea) { toast.error("평형을 선택해주세요."); return; }
-    if (!bidPrice || Number(bidPrice) <= 0) { toast.error("입찰 희망가를 입력해주세요."); return; }
+    if (!bidPrice || Number(bidPrice) <= 0) { toast.error("입찰가를 입력해주세요."); return; }
 
     const bid = Number(bidPrice);
+    const months = Math.max(1, Number(holdMonths) || 12);
     const areaPyeong = Number(selectedArea) * 0.3025;
     const loanPrincipal = bid * (costs.loanLtv / 100);
 
     // 파생 계산값
     const evictionCost    = Math.round(costs.evictionCostPerPyeong * areaPyeong);
-    const loanInterest    = Math.round(loanPrincipal * (costs.loanRate / 100));   // 1년치
+    const loanInterest    = Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)); // 보유 개월 기준
     const loanFee         = Math.round(loanPrincipal * (costs.loanFeeRate / 100));
     const prepaymentPenalty = Math.round(loanPrincipal * (costs.prepaymentRate / 100));
 
@@ -389,6 +391,7 @@ export function AuctionInputForm() {
 
   // 부대비용 미리보기 (합계)
   const bid = Number(bidPrice) || 0;
+  const months = Math.max(1, Number(holdMonths) || 12);
   const areaPyeong = Number(selectedArea) * 0.3025;
   const loanPrincipal = bid * (costs.loanLtv / 100);
   const totalAdditional =
@@ -396,7 +399,7 @@ export function AuctionInputForm() {
     Math.round(costs.evictionCostPerPyeong * areaPyeong) +
     costs.unpaidMaintenance +
     costs.interiorCost +
-    Math.round(loanPrincipal * (costs.loanRate / 100)) +
+    Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)) +
     Math.round(loanPrincipal * (costs.loanFeeRate / 100)) +
     Math.round(loanPrincipal * (costs.prepaymentRate / 100));
 
@@ -469,7 +472,7 @@ export function AuctionInputForm() {
                 {selectedArea && (
                   <p className="flex items-center gap-1.5 text-xs text-zinc-500">
                     <Check className="h-3 w-3 text-emerald-500" />
-                    전용 {selectedArea}㎡ (약 {Math.round(Number(selectedArea) * 0.3025)}평)
+                    {areas.find((a) => String(a.exclusive_area) === selectedArea)?.label ?? `전용 ${selectedArea}㎡`}
                   </p>
                 )}
               </div>
@@ -495,23 +498,44 @@ export function AuctionInputForm() {
           {/* 구분선 */}
           <div className="border-t border-zinc-100" />
 
-          {/* 입찰 희망가 */}
-          <div>
-            <FormLabel htmlFor="bidPrice">입찰 희망가</FormLabel>
-            <FormInput
-              id="bidPrice"
-              type="number"
-              placeholder="50000"
-              value={bidPrice}
-              onChange={(e) => setBidPrice(e.target.value)}
-              min={1}
-              suffix="만원"
-            />
-            {bidPreview && (
-              <p className="mt-1.5 text-xs tabular-nums text-zinc-500">
-                = {bidPreview}
-              </p>
-            )}
+          {/* 입찰가 + 매도 희망일 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FormLabel htmlFor="bidPrice">입찰가</FormLabel>
+              <FormInput
+                id="bidPrice"
+                type="number"
+                placeholder="50000"
+                value={bidPrice}
+                onChange={(e) => setBidPrice(e.target.value)}
+                min={1}
+                suffix="만원"
+              />
+              {bidPreview && (
+                <p className="mt-1.5 text-xs tabular-nums text-zinc-500">
+                  = {bidPreview}
+                </p>
+              )}
+            </div>
+            <div>
+              <FormLabel htmlFor="holdMonths">매도 희망일</FormLabel>
+              <FormInput
+                id="holdMonths"
+                type="number"
+                placeholder="12"
+                value={holdMonths}
+                onChange={(e) => setHoldMonths(e.target.value)}
+                min={1}
+                suffix="개월"
+              />
+              {holdMonths && Number(holdMonths) > 0 && (
+                <p className="mt-1.5 text-xs text-zinc-500">
+                  {Number(holdMonths) >= 12
+                    ? `${Math.floor(Number(holdMonths) / 12)}년${Number(holdMonths) % 12 > 0 ? ` ${Number(holdMonths) % 12}개월` : ""} 보유 기준 이자 계산`
+                    : `${holdMonths}개월 보유 기준 이자 계산`}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* 부대비용 접이식 */}
