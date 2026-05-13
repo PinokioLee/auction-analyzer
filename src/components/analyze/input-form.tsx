@@ -24,14 +24,14 @@ interface CostState {
 }
 
 const DEFAULT_COSTS: CostState = {
-  legalFee: 80,
-  evictionCostPerPyeong: 10,
-  unpaidMaintenance: 100,
+  legalFee: 0,
+  evictionCostPerPyeong: 0,
+  unpaidMaintenance: 0,
   interiorCost: 0,
-  loanLtv: 70,
-  loanRate: 4.8,
-  loanFeeRate: 0.7,
-  prepaymentRate: 1.4,
+  loanLtv: 0,
+  loanRate: 0,
+  loanFeeRate: 0,
+  prepaymentRate: 0,
 };
 
 // ── 공통 UI 컴포넌트 ──────────────────────────────
