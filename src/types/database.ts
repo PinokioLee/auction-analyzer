@@ -117,6 +117,111 @@ export type Database = {
         }
         Relationships: []
       }
+      apt_transactions: {
+        Row: {
+          id: number
+          lawd_cd: string
+          deal_ymd: string
+          apt_name: string
+          exclusive_area: number
+          deal_amount: number
+          floor: number | null
+          build_year: number | null
+          dong: string | null
+          jibun: string | null
+          deal_date: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          lawd_cd: string
+          deal_ymd: string
+          apt_name: string
+          exclusive_area: number
+          deal_amount: number
+          floor?: number | null
+          build_year?: number | null
+          dong?: string | null
+          jibun?: string | null
+          deal_date: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          lawd_cd?: string
+          deal_ymd?: string
+          apt_name?: string
+          exclusive_area?: number
+          deal_amount?: number
+          floor?: number | null
+          build_year?: number | null
+          dong?: string | null
+          jibun?: string | null
+          deal_date?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      backfill_progress: {
+        Row: {
+          lawd_cd: string
+          deal_ymd: string
+          status: string
+          row_count: number | null
+          fetched_at: string | null
+          error_message: string | null
+        }
+        Insert: {
+          lawd_cd: string
+          deal_ymd: string
+          status: string
+          row_count?: number | null
+          fetched_at?: string | null
+          error_message?: string | null
+        }
+        Update: {
+          lawd_cd?: string
+          deal_ymd?: string
+          status?: string
+          row_count?: number | null
+          fetched_at?: string | null
+          error_message?: string | null
+        }
+        Relationships: []
+      }
+      daily_sync_log: {
+        Row: {
+          id: number
+          run_date: string
+          target_ymds: string[]
+          total_calls: number | null
+          total_rows: number | null
+          failed_regions: string[] | null
+          duration_seconds: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          run_date: string
+          target_ymds: string[]
+          total_calls?: number | null
+          total_rows?: number | null
+          failed_regions?: string[] | null
+          duration_seconds?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          run_date?: string
+          target_ymds?: string[]
+          total_calls?: number | null
+          total_rows?: number | null
+          failed_regions?: string[] | null
+          duration_seconds?: number | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

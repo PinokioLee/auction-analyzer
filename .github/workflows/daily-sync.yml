@@ -1,0 +1,28 @@
+name: MOLIT Daily Sync
+
+on:
+  workflow_dispatch: # 수동 실행
+  schedule:
+    - cron: "0 19 * * *" # 매일 04:00 KST (백필 끝나고)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run daily sync
+        run: npx tsx scripts/daily-sync.ts
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

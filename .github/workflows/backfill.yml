@@ -1,0 +1,28 @@
+name: MOLIT Backfill
+
+on:
+  workflow_dispatch: # 수동 실행
+  schedule:
+    - cron: "0 18 * * *" # 매일 03:00 KST (UTC+9 = UTC 18:00)
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run backfill
+        run: npx tsx scripts/backfill.ts
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
