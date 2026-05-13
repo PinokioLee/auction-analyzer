@@ -118,6 +118,24 @@ async function processTask(task: {
 // ── 메인 ─────────────────────────────────────────
 
 async function main() {
+  // 환경변수 체크
+  const missingVars = ["MOLIT_API_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
+    .filter((k) => !process.env[k]);
+  if (missingVars.length > 0) {
+    throw new Error(`환경변수 누락: ${missingVars.join(", ")}`);
+  }
+  console.log("[backfill] 환경변수 확인 완료");
+
+  // Supabase 연결 체크
+  const { error: pingError } = await supabase
+    .from("backfill_progress")
+    .select("lawd_cd")
+    .limit(1);
+  if (pingError) {
+    throw new Error(`Supabase 연결 실패: ${pingError.message} (code: ${pingError.code})`);
+  }
+  console.log("[backfill] Supabase 연결 확인 완료");
+
   const startTime = Date.now();
   const tasks = await getPendingTasks();
   console.log(`[backfill] 총 대기 작업: ${tasks.length}개`);

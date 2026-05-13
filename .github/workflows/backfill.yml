@@ -1,9 +1,9 @@
 name: MOLIT Backfill
 
 on:
-  workflow_dispatch: # 수동 실행
+  workflow_dispatch:
   schedule:
-    - cron: "0 18 * * *" # 매일 03:00 KST (UTC+9 = UTC 18:00)
+    - cron: "0 18 * * *" # 매일 03:00 KST
 
 jobs:
   backfill:
@@ -18,10 +18,23 @@ jobs:
           node-version: 20
           cache: "npm"
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check environment
+        env:
+          MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node --version
+          npx tsx --version
+          echo "MOLIT_API_KEY: $([ -n "$MOLIT_API_KEY" ] && echo 'SET' || echo 'MISSING')"
+          echo "SUPABASE_URL: $([ -n "$SUPABASE_URL" ] && echo 'SET' || echo 'MISSING')"
+          echo "SUPABASE_SERVICE_ROLE_KEY: $([ -n "$SUPABASE_SERVICE_ROLE_KEY" ] && echo 'SET' || echo 'MISSING')"
 
       - name: Run backfill
-        run: npx tsx scripts/backfill.ts
+        run: npx tsx --tsconfig scripts/tsconfig.json scripts/backfill.ts
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
