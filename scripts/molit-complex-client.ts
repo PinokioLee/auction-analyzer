@@ -1,14 +1,16 @@
 /**
  * 국토교통부 공동주택 단지 API 클라이언트
  *
- * - AptListService3    : 단지 목록 (시군구코드 기준)
- * - AptBasisInfoServiceV4 : 단지 기본 정보 (단지코드 기준)
+ * - AptListService3       : 단지 목록 (시군구코드 기준)
+ *   오퍼레이션: /getSigunguAptList3
+ * - AptBasisInfoServiceV4 : 단지 기본/상세 정보 (단지코드 기준)
+ *   오퍼레이션: /getAphusBassInfoV4
  */
 
 const LIST_ENDPOINT =
-  "https://apis.data.go.kr/1613000/AptListService3";
+  "https://apis.data.go.kr/1613000/AptListService3/getSigunguAptList3";
 const BASIS_ENDPOINT =
-  "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAptBasisInfo";
+  "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAphusBassInfoV4";
 
 // ── 단지 목록 ──────────────────────────────────────────────────
 
@@ -43,14 +45,12 @@ export async function fetchComplexList(lawdCd: string): Promise<ComplexListItem[
   const numOfRows = 1000;
 
   while (true) {
-    // 5자리 시군구코드 → 10자리 법정동코드 (뒤에 00000 패딩)
-    const bjdCode10 = lawdCd.length === 5 ? lawdCd + "00000" : lawdCd;
     const params = new URLSearchParams({
-      serviceKey: key,
-      bjdCode:    bjdCode10,
-      pageNo:     String(pageNo),
-      numOfRows:  String(numOfRows),
-      _type:      "json",
+      serviceKey:   key,
+      sigunguCode:  lawdCd,   // 5자리 시군구코드
+      pageNo:       String(pageNo),
+      numOfRows:    String(numOfRows),
+      _type:        "json",
     });
 
     const res = await fetch(`${LIST_ENDPOINT}?${params}`, {
@@ -88,7 +88,7 @@ export interface ComplexBasisItem {
   kaptUsedate:  string;   // 사용승인일 (YYYYMMDD)
   kaptDong:     string;   // 동수
   kaptTotHo:    string;   // 총세대수
-  kaptBcomplex: string;   // 총동수 (일부 API에서 다름)
+  kaptBcomplex: string;   // 총동수
   kaptdaCnt:    string;   // 총주차대수
   bjdCode:      string;
 }
@@ -110,7 +110,7 @@ export async function fetchComplexBasis(kaptCode: string): Promise<ComplexBasisI
   const params = new URLSearchParams({
     serviceKey: key,
     kaptCode,
-    _type: "json",
+    _type:      "json",
   });
 
   const res = await fetch(`${BASIS_ENDPOINT}?${params}`, {
