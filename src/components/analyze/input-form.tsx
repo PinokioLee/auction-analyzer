@@ -565,7 +565,7 @@ export function AuctionInputForm() {
 
             <div>
               <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-5">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                   {/* 법무사 비용 */}
                   <div>
                     <FormLabel htmlFor="legalFee">법무사 비용</FormLabel>

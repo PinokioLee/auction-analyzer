@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronLeft, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
+import { calculateAcquisitionTax } from "@/lib/calculator/acquisition-tax";
 import { naverMapUrl } from "@/lib/utils/naver-link";
 import regionCodes from "../../../../public/data/region-codes.json";
 
@@ -234,9 +235,22 @@ export default async function ResultPage({ searchParams }: Props) {
 
   // 대출이자 breakdown
   const holdMonths    = priceAnalysis?.holdMonths ?? 0;
+  const loanRate      = priceAnalysis?.loanRate ?? 0;
   const monthlyInterest = holdMonths > 0 && loanInterest > 0
     ? Math.round(loanInterest / holdMonths)
     : 0;
+
+  // 취득세 상세 breakdown
+  const taxBreakdown = calculateAcquisitionTax(row.bid_price, row.area);
+  const taxRateDisplay = (() => {
+    const priceWon = row.bid_price * 10_000;
+    let rate: number;
+    if (priceWon <= 600_000_000) rate = 0.01;
+    else if (priceWon <= 900_000_000) rate = (priceWon / 100_000_000 - 3) / 300;
+    else rate = 0.03;
+    return (rate * 100).toFixed(2).replace(/\.?0+$/, "");
+  })();
+
 
   const lawdCdForLink = priceAnalysis?.lawdCd ?? "";
   const pricePageUrl = lawdCdForLink
@@ -400,7 +414,27 @@ export default async function ResultPage({ searchParams }: Props) {
           <div className="border-t border-zinc-100 pt-2.5">
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">취득세</p>
             <div className="space-y-2">
-              <CostRow label="취득세 합계" value={acquisitionTax} indent />
+              <CostRow
+                label="취득세"
+                value={taxBreakdown.acquisitionTax}
+                indent
+                detail={`${formatKoreanWon(row.bid_price)} × ${taxRateDisplay}% = ${formatManwon(taxBreakdown.acquisitionTax)}`}
+              />
+              <CostRow
+                label="교육세"
+                value={taxBreakdown.educationTax}
+                indent
+                detail={`취득세 × 10% = ${formatManwon(taxBreakdown.educationTax)}`}
+              />
+              {taxBreakdown.ruralTax > 0 && (
+                <CostRow
+                  label="농특세"
+                  value={taxBreakdown.ruralTax}
+                  indent
+                  detail={`취득세 × 20% = ${formatManwon(taxBreakdown.ruralTax)}`}
+                />
+              )}
+              <CostRow label="취득세 합계" value={taxBreakdown.total} indent bold={false} />
             </div>
           </div>
 
@@ -416,7 +450,7 @@ export default async function ResultPage({ searchParams }: Props) {
                 value={loanInterest}
                 indent
                 detail={monthlyInterest > 0 && holdMonths > 0
-                  ? `월 ${monthlyInterest.toLocaleString()}만원 × ${holdMonths}개월`
+                  ? `${formatKoreanWon(loanAmount)} × ${loanRate}% ÷ 12 = 월 ${monthlyInterest.toLocaleString()}만원 × ${holdMonths}개월`
                   : undefined}
               />
               <CostRow label="대출수수료"     value={row.loan_fee ?? 0}           indent />

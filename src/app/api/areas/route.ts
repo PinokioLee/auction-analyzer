@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
 
   const result = unique.map((area) => {
     const pyeong = Math.round(area * 0.3025 * 10) / 10;
-    // 소수점 2자리까지 표시하여 같은 "84평형"이라도 타입 구분 가능
     const areaDisplay = Number.isInteger(area) ? `${area}` : area.toFixed(2);
     return {
       exclusive_area: area,
