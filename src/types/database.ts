@@ -129,7 +129,7 @@ export type Database = {
         }
         Relationships: []
       }
-      apt_transactions: {
+      apartment_trade: {
         Row: {
           id: number
           lawd_cd: string

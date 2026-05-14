@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   const cutoff = sixMonthsAgo.toISOString().slice(0, 10);
 
   const { data: txData } = await supabase
-    .from("apt_transactions")
+    .from("apartment_trade")
     .select("floor, deal_amount, deal_date")
     .eq("lawd_cd", lawdCd)
     .eq("apt_name", aptName)

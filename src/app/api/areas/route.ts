@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("apt_transactions")
+    .from("apartment_trade")
     .select("exclusive_area")
     .eq("lawd_cd", lawdCd)
     .eq("apt_name", aptName);

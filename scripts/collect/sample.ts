@@ -51,7 +51,7 @@ async function main() {
   );
 
   // Supabase 연결 확인
-  const { error: pingErr } = await supabase.from("apt_transactions").select("id").limit(1);
+  const { error: pingErr } = await supabase.from("apartment_trade").select("id").limit(1);
   if (pingErr) throw new Error(`Supabase 연결 실패: ${pingErr.message}`);
 
   const ymds = getRecentYmds(MONTHS);
@@ -76,7 +76,7 @@ async function main() {
           .filter((n) => n.apt_name && n.deal_amount > 0);
 
         if (normalized.length > 0) {
-          const { error } = await supabase.from("apt_transactions").upsert(normalized, {
+          const { error } = await supabase.from("apartment_trade").upsert(normalized, {
             onConflict: "lawd_cd,apt_name,exclusive_area,floor,deal_date,deal_amount",
             ignoreDuplicates: true,
           });

@@ -4,7 +4,7 @@
  * 수집 순서:
  *   1. 단지 목록  (AptListService3)        → apartment_master
  *   2. 단지 기본정보 (AptBasisInfoServiceV4) → apartment_master 업데이트
- *   3. 매매 실거래가 (RTMSDataSvcAptTradeDev) → apt_transactions
+ *   3. 매매 실거래가 (RTMSDataSvcAptTradeDev) → apartment_trade
  *   4. 전월세 실거래가 (RTMSDataSvcAptRent)   → apartment_rent
  *
  * 실행: npx tsx --tsconfig scripts/tsconfig.json scripts/seed-daejeon.ts
@@ -188,7 +188,7 @@ async function collectTrade() {
 
         if (normalized.length > 0) {
           const { error } = await supabase
-            .from("apt_transactions")
+            .from("apartment_trade")
             .upsert(
               normalized.map((n) => ({
                 lawd_cd:        n.lawd_cd,

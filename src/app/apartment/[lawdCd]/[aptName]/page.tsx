@@ -49,7 +49,7 @@ export default async function ApartmentPage({ params }: Props) {
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
   const { data: txData } = await supabase
-    .from("apt_transactions")
+    .from("apartment_trade")
     .select("floor, deal_amount, deal_date, exclusive_area")
     .eq("lawd_cd", lawdCd)
     .eq("apt_name", aptName)

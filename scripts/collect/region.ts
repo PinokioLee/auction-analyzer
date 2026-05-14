@@ -99,7 +99,7 @@ async function main() {
         .filter((n) => n.apt_name && n.deal_amount > 0);
 
       if (normalized.length > 0) {
-        const { error } = await supabase.from("apt_transactions").upsert(normalized, {
+        const { error } = await supabase.from("apartment_trade").upsert(normalized, {
           onConflict: "lawd_cd,apt_name,exclusive_area,floor,deal_date,deal_amount",
           ignoreDuplicates: true,
         });
