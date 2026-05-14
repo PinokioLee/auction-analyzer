@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Loader2, Check } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -298,7 +298,7 @@ export function AuctionInputForm() {
   const [bidPrice, setBidPrice] = useState("");
   const [holdMonths, setHoldMonths] = useState("12"); // 매도 희망일 (개월)
   const [costs, setCosts] = useState<CostState>(DEFAULT_COSTS);
-  const [showCosts, setShowCosts] = useState(false);
+  const [showCosts, setShowCosts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -555,33 +555,19 @@ export function AuctionInputForm() {
             </div>
           </div>
 
-          {/* 부대비용 접이식 */}
+          {/* 부대비용 */}
           <div>
-            <button
-              type="button"
-              className={cn(
-                "flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-medium text-zinc-700",
-                "border border-zinc-200 bg-zinc-50 transition-colors duration-150 hover:bg-zinc-100"
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-semibold text-zinc-900">부대비용 상세 설정</p>
+              {bid > 0 && (
+                <span className="tabular-nums text-xs text-zinc-400">
+                  합계 약 {totalAdditional.toLocaleString()}만원
+                </span>
               )}
-              onClick={() => setShowCosts((v) => !v)}
-              aria-expanded={showCosts}
-            >
-              <span className="flex items-center gap-2">
-                <span>부대비용 상세 설정</span>
-                {bid > 0 && (
-                  <span className="tabular-nums text-xs font-normal text-zinc-400">
-                    합계 약 {totalAdditional.toLocaleString()}만원
-                  </span>
-                )}
-              </span>
-              {showCosts
-                ? <ChevronUp className="h-4 w-4 text-zinc-400" />
-                : <ChevronDown className="h-4 w-4 text-zinc-400" />
-              }
-            </button>
+            </div>
 
-            {showCosts && (
-              <div className="mt-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-5">
+            <div>
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {/* 법무사 비용 */}
                   <div>
@@ -695,7 +681,7 @@ export function AuctionInputForm() {
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* 제출 버튼 */}
