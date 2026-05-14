@@ -272,8 +272,12 @@ async function main() {
   const startTime = Date.now();
 
   if (!onlyStep || onlyStep === "complex") {
-    await collectComplexList();
-    if (!skipBasis) await collectComplexBasis();
+    try {
+      await collectComplexList();
+      if (!skipBasis) await collectComplexBasis();
+    } catch (e) {
+      console.warn(`  단지목록/기본정보 수집 실패 (건너뜀): ${errMsg(e)}`);
+    }
   }
   if (!onlyStep || onlyStep === "trade")   await collectTrade();
   if (!onlyStep || onlyStep === "rent")    await collectRent();
