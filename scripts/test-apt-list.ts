@@ -34,13 +34,15 @@ const PARAM_VARIANTS = [
   { LAWD_CD: LAWD },
 ];
 
-async function probe(url: string, params: Record<string, string>) {
-  const qs = new URLSearchParams({ serviceKey: KEY, numOfRows: "1", pageNo: "1", _type: "json", ...params });
+async function probe(url: string, params: Record<string, string>, json = false) {
+  const base: Record<string, string> = { serviceKey: KEY, numOfRows: "1", pageNo: "1" };
+  if (json) base["_type"] = "json";
+  const qs = new URLSearchParams({ ...base, ...params });
   const fullUrl = `${url}?${qs}`;
   try {
     const res = await fetch(fullUrl, { signal: AbortSignal.timeout(8_000) });
     const text = await res.text();
-    const preview = text.slice(0, 150).replace(/[\n\r]/g, " ");
+    const preview = text.slice(0, 200).replace(/[\n\r]/g, " ");
     return { status: res.status, preview };
   } catch (e) {
     return { status: 0, preview: e instanceof Error ? e.message : String(e) };
@@ -52,23 +54,25 @@ async function main() {
 
   console.log("=== AptListService3 엔드포인트 탐색 ===\n");
 
-  // 베이스 URL(서브경로 없음)에서 파라미터 변형 탐색
-  console.log("=== 베이스 URL 파라미터 변형 탐색 ===\n");
+  // 베이스 URL — JSON vs XML, 파라미터 변형
+  console.log("=== 베이스 URL: XML vs JSON × 파라미터 변형 ===\n");
   const paramVariants: Array<{ label: string; params: Record<string, string> }> = [
     { label: "bjdCode=5자리",         params: { bjdCode: LAWD } },
     { label: "bjdCode=10자리(00000)", params: { bjdCode: LAWD + "00000" } },
     { label: "bjdCode=10자리(정확)",  params: { bjdCode: "3011000000" } },
     { label: "sidoCode=30",           params: { sidoCode: "30" } },
     { label: "sggCd=5자리",           params: { sggCd: LAWD } },
-    { label: "lawdCd=5자리",          params: { lawdCd: LAWD } },
-    { label: "LAWD_CD=5자리",         params: { LAWD_CD: LAWD } },
   ];
 
   for (const { label, params } of paramVariants) {
-    const { status, preview } = await probe(LIST_BASE, params);
-    const mark = status === 200 ? "✅" : status === 500 ? "⚠️" : "  ";
-    console.log(`${mark} [${status}] ${label} → ${preview.slice(0, 100)}`);
-    await new Promise(r => setTimeout(r, 300));
+    const xml  = await probe(LIST_BASE, params, false);
+    const json = await probe(LIST_BASE, params, true);
+    const xmlMark  = xml.status  === 200 ? "✅" : xml.status  === 500 ? "⚠️" : "  ";
+    const jsonMark = json.status === 200 ? "✅" : json.status === 500 ? "⚠️" : "  ";
+    console.log(`${xmlMark} XML  [${xml.status}]  ${label} → ${xml.preview.slice(0, 120)}`);
+    console.log(`${jsonMark} JSON [${json.status}] ${label} → ${json.preview.slice(0, 120)}`);
+    console.log();
+    await new Promise(r => setTimeout(r, 400));
   }
 
   // AptBasisInfoServiceV4 탐색
@@ -80,10 +84,13 @@ async function main() {
     { label: "getAptBasisInfoV4", url: `${BASIS_BASE}/getAptBasisInfoV4`,     params: { kaptCode: "A10000000" } },
   ];
   for (const { label, url, params } of basisVariants) {
-    const { status, preview } = await probe(url, params);
-    const mark = status === 200 ? "✅" : status === 500 ? "⚠️" : "  ";
-    console.log(`${mark} [${status}] ${label} → ${preview.slice(0, 100)}`);
-    await new Promise(r => setTimeout(r, 300));
+    const xml  = await probe(url, params, false);
+    const json = await probe(url, params, true);
+    const xmlMark  = xml.status  === 200 ? "✅" : xml.status  === 500 ? "⚠️" : "  ";
+    const jsonMark = json.status === 200 ? "✅" : json.status === 500 ? "⚠️" : "  ";
+    console.log(`${xmlMark} XML  [${xml.status}]  ${label} → ${xml.preview.slice(0, 120)}`);
+    console.log(`${jsonMark} JSON [${json.status}] ${label} → ${json.preview.slice(0, 120)}`);
+    await new Promise(r => setTimeout(r, 400));
   }
 }
 
