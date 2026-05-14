@@ -14,7 +14,7 @@ interface AreaOption { exclusive_area: number; label: string }
 
 interface CostState {
   legalFee: number;              // 법무사 비용 만원 (기본 80)
-  evictionCostPerPyeong: number; // 명도비용 만원/평 (기본 10)
+  evictionCost: number;          // 명도비용 만원
   unpaidMaintenance: number;     // 미납관리비 만원 (기본 100)
   interiorCost: number;          // 인테리어 비용 만원 (기본 0)
   loanLtv: number;               // 대출 LTV % (기본 70)
@@ -25,7 +25,7 @@ interface CostState {
 
 const DEFAULT_COSTS: CostState = {
   legalFee: 0,
-  evictionCostPerPyeong: 0,
+  evictionCost: 0,
   unpaidMaintenance: 0,
   interiorCost: 0,
   loanLtv: 0,
@@ -339,7 +339,7 @@ export function AuctionInputForm() {
     const loanPrincipal = bid * (costs.loanLtv / 100);
 
     // 파생 계산값
-    const evictionCost    = Math.round(costs.evictionCostPerPyeong * areaPyeong);
+    const evictionCost    = costs.evictionCost;
     const loanAmount      = Math.round(loanPrincipal); // 대출 원금 (만원)
     const loanInterest    = Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)); // 보유 개월 기준
     const loanFee         = Math.round(loanPrincipal * (costs.loanFeeRate / 100));
@@ -410,7 +410,7 @@ export function AuctionInputForm() {
   const loanPrincipal = bid * (costs.loanLtv / 100);
   const totalAdditional =
     costs.legalFee +
-    Math.round(costs.evictionCostPerPyeong * areaPyeong) +
+    costs.evictionCost +
     costs.unpaidMaintenance +
     costs.interiorCost +
     Math.round(loanPrincipal * (costs.loanRate / 100) * (months / 12)) +
@@ -580,14 +580,14 @@ export function AuctionInputForm() {
                   </div>
                   {/* 명도비용 */}
                   <div>
-                    <FormLabel htmlFor="eviction">명도비용(평당)</FormLabel>
+                    <FormLabel htmlFor="eviction">명도비용</FormLabel>
                     <FormInput
                       id="eviction"
                       type="number"
-                      value={costs.evictionCostPerPyeong}
-                      onChange={(e) => setCosts((c) => ({ ...c, evictionCostPerPyeong: Number(e.target.value) || 0 }))}
+                      value={costs.evictionCost}
+                      onChange={(e) => setCosts((c) => ({ ...c, evictionCost: Number(e.target.value) || 0 }))}
                       min={0}
-                      suffix="만원/평"
+                      suffix="만원"
                     />
                   </div>
                   {/* 미납관리비 */}
