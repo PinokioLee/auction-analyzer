@@ -6,7 +6,7 @@
  */
 
 const LIST_ENDPOINT =
-  "https://apis.data.go.kr/1613000/AptListService3/getAptListBjd";
+  "https://apis.data.go.kr/1613000/AptListService3";
 const BASIS_ENDPOINT =
   "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAptBasisInfo";
 
@@ -43,9 +43,11 @@ export async function fetchComplexList(lawdCd: string): Promise<ComplexListItem[
   const numOfRows = 1000;
 
   while (true) {
+    // 5자리 시군구코드 → 10자리 법정동코드 (뒤에 00000 패딩)
+    const bjdCode10 = lawdCd.length === 5 ? lawdCd + "00000" : lawdCd;
     const params = new URLSearchParams({
       serviceKey: key,
-      bjdCode:    lawdCd,
+      bjdCode:    bjdCode10,
       pageNo:     String(pageNo),
       numOfRows:  String(numOfRows),
       _type:      "json",

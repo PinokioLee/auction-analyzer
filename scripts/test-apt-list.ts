@@ -52,38 +52,37 @@ async function main() {
 
   console.log("=== AptListService3 엔드포인트 탐색 ===\n");
 
-  // 오퍼레이션 이름 × 첫 번째 파라미터 조합
-  for (const op of LIST_OPS) {
-    const url = op ? `${LIST_BASE}/${op}` : LIST_BASE;
-    const { status, preview } = await probe(url, { bjdCode: LAWD });
-    const mark = status === 200 ? "✅" : status === 404 ? "  " : "⚠️";
-    console.log(`${mark} [${status}] ${op || "(no-op)"} → ${preview.slice(0, 100)}`);
-    if (status === 200) {
-      console.log("\n  ★ 오퍼레이션 찾음:", op || "(서브경로 없음)");
-      console.log("  URL:", url);
-    }
+  // 베이스 URL(서브경로 없음)에서 파라미터 변형 탐색
+  console.log("=== 베이스 URL 파라미터 변형 탐색 ===\n");
+  const paramVariants: Array<{ label: string; params: Record<string, string> }> = [
+    { label: "bjdCode=5자리",         params: { bjdCode: LAWD } },
+    { label: "bjdCode=10자리(00000)", params: { bjdCode: LAWD + "00000" } },
+    { label: "bjdCode=10자리(정확)",  params: { bjdCode: "3011000000" } },
+    { label: "sidoCode=30",           params: { sidoCode: "30" } },
+    { label: "sggCd=5자리",           params: { sggCd: LAWD } },
+    { label: "lawdCd=5자리",          params: { lawdCd: LAWD } },
+    { label: "LAWD_CD=5자리",         params: { LAWD_CD: LAWD } },
+  ];
+
+  for (const { label, params } of paramVariants) {
+    const { status, preview } = await probe(LIST_BASE, params);
+    const mark = status === 200 ? "✅" : status === 500 ? "⚠️" : "  ";
+    console.log(`${mark} [${status}] ${label} → ${preview.slice(0, 100)}`);
     await new Promise(r => setTimeout(r, 300));
   }
 
-  // 200이 없으면 파라미터 이름 변형 시도 (getAptList 기준)
-  console.log("\n=== 파라미터 이름 변형 탐색 (getAptList 기준) ===\n");
-  for (const params of PARAM_VARIANTS) {
-    const url = `${LIST_BASE}/getAptList`;
-    const { status, preview } = await probe(url, params as Record<string, string>);
-    const mark = status === 200 ? "✅" : "  ";
-    console.log(`${mark} [${status}] params=${JSON.stringify(params)} → ${preview.slice(0, 80)}`);
-    await new Promise(r => setTimeout(r, 300));
-  }
-
-  // AptBasisInfoServiceV4도 탐색
+  // AptBasisInfoServiceV4 탐색
   console.log("\n=== AptBasisInfoServiceV4 탐색 ===\n");
   const BASIS_BASE = "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4";
-  const BASIS_OPS  = ["", "getAptBasisInfo", "getAptBasisInfoService", "getAptBasisInfoV4", "getAptInfo"];
-  for (const op of BASIS_OPS) {
-    const url = op ? `${BASIS_BASE}/${op}` : BASIS_BASE;
-    const { status, preview } = await probe(url, { kaptCode: "A10000000" });
-    const mark = status === 200 ? "✅" : "  ";
-    console.log(`${mark} [${status}] ${op || "(no-op)"} → ${preview.slice(0, 100)}`);
+  const basisVariants: Array<{ label: string; url: string; params: Record<string, string> }> = [
+    { label: "(no-op)",           url: BASIS_BASE,                            params: { kaptCode: "A10000000" } },
+    { label: "getAptBasisInfo",   url: `${BASIS_BASE}/getAptBasisInfo`,       params: { kaptCode: "A10000000" } },
+    { label: "getAptBasisInfoV4", url: `${BASIS_BASE}/getAptBasisInfoV4`,     params: { kaptCode: "A10000000" } },
+  ];
+  for (const { label, url, params } of basisVariants) {
+    const { status, preview } = await probe(url, params);
+    const mark = status === 200 ? "✅" : status === 500 ? "⚠️" : "  ";
+    console.log(`${mark} [${status}] ${label} → ${preview.slice(0, 100)}`);
     await new Promise(r => setTimeout(r, 300));
   }
 }
