@@ -13,9 +13,11 @@ interface Memo {
 
 export default async function FieldRecordsPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const { data: records } = await supabase
     .from("field_records")
     .select("id, case_number, bid_date, apt_name, exclusive_area, memo, created_at")
+    .eq("user_id", user?.id ?? "")
     .order("created_at", { ascending: false });
 
   return (

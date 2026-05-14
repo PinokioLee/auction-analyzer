@@ -123,77 +123,68 @@ export async function POST(request: NextRequest) {
     highROI: calcROI(calcProfit(priceAnalysis.high)),
   };
 
-  // ⑤ Supabase 저장
+  // ⑤ Supabase 저장 — analysis_history + profit_calculations 병렬 처리
   let historyId = "";
-  const priceAnalysisJson = JSON.parse(JSON.stringify({ ...priceAnalysis, dataSource, lawdCd, holdMonths, loanRate }));
+  const priceAnalysisJson = {
+    ...priceAnalysis,
+    dataSource,
+    lawdCd:     lawdCd     as string,
+    holdMonths: holdMonths as number,
+    loanRate:   loanRate   as number,
+  };
 
-  try {
-    const { data, error } = await supabase
-      .from("analysis_history")
-      .insert({
-        apartment_name:     (aptName as string).trim(),
-        area:               exclusiveArea as number,
-        floor:              typeof floor === "number" ? floor : 1,
-        total_floors:       totalFloorNum,
-        bid_price:          bidPrice as number,
-        acquisition_tax:    taxResult.total,
-        legal_fee:          legalFee as number,
-        eviction_cost:      evictionCost as number,
-        unpaid_maintenance: unpaidMaintenance as number,
-        interior_cost:      interiorCost as number,
-        loan_amount:        loanAmount as number,
-        loan_interest:      loanInterest as number,
-        loan_fee:           loanFee as number,
-        prepayment_penalty: prepaymentPenalty as number,
-        enforcement_cost:   enforcementCost as number,
-        total_cost:         totalCost,
-        price_analysis:     priceAnalysisJson,
-      })
-      .select("id")
-      .single();
+  const historyRow = {
+    apartment_name:     (aptName as string).trim(),
+    area:               exclusiveArea as number,
+    floor:              typeof floor === "number" ? floor : 1,
+    total_floors:       totalFloorNum,
+    bid_price:          bidPrice as number,
+    acquisition_tax:    taxResult.total,
+    legal_fee:          legalFee as number,
+    eviction_cost:      evictionCost as number,
+    unpaid_maintenance: unpaidMaintenance as number,
+    interior_cost:      interiorCost as number,
+    loan_amount:        loanAmount as number,
+    loan_interest:      loanInterest as number,
+    loan_fee:           loanFee as number,
+    prepayment_penalty: prepaymentPenalty as number,
+    enforcement_cost:   enforcementCost as number,
+    total_cost:         totalCost,
+    price_analysis:     priceAnalysisJson,
+  };
 
-    if (error) {
-      console.error("[Supabase] 저장 실패:", error.message);
-    } else {
-      historyId = data.id;
-    }
-  } catch (err) {
-    console.error("[Supabase] 예외:", err);
+  // auth.getUser()와 history insert를 병렬로 실행
+  const [historyResult, userResult] = await Promise.allSettled([
+    supabase.from("analysis_history").insert(historyRow).select("id").single(),
+    supabase.auth.getUser(),
+  ]);
+
+  if (historyResult.status === "fulfilled" && !historyResult.value.error) {
+    historyId = historyResult.value.data.id;
+  } else if (historyResult.status === "fulfilled" && historyResult.value.error) {
+    console.error("[Supabase] 저장 실패:", historyResult.value.error.message);
   }
 
-  // ⑥ 로그인 사용자는 profit_calculations에도 저장
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("profit_calculations").insert({
-        user_id:        user.id,
-        lawd_cd:        lawdCd as string,
-        apt_name:       (aptName as string).trim(),
-        exclusive_area: exclusiveArea as number,
-        input_data: {
-          bidPrice:          bidPrice          as number,
-          legalFee:          legalFee          as number,
-          evictionCost:      evictionCost      as number,
-          unpaidMaintenance: unpaidMaintenance as number,
-          interiorCost:      interiorCost      as number,
-          loanAmount:        loanAmount        as number,
-          loanInterest:      loanInterest      as number,
-          loanFee:           loanFee           as number,
-          prepaymentPenalty: prepaymentPenalty as number,
-          enforcementCost:   enforcementCost   as number,
-          holdMonths:        holdMonths        as number,
-          loanRate:          loanRate          as number,
-        } as import("@/types/database").Json,
-        result_data: {
-          totalCost,
-          acquisitionTax: taxResult.total,
-          priceAnalysis: priceAnalysisJson,
-          historyId,
-        },
-      });
-    }
-  } catch (err) {
-    console.error("[profit_calculations] 저장 예외:", err);
+  if (
+    userResult.status === "fulfilled" &&
+    userResult.value.data.user &&
+    historyId
+  ) {
+    const user = userResult.value.data.user;
+    supabase.from("profit_calculations").insert({
+      user_id:        user.id,
+      lawd_cd:        lawdCd as string,
+      apt_name:       (aptName as string).trim(),
+      exclusive_area: exclusiveArea as number,
+      input_data: {
+        bidPrice, legalFee, evictionCost, unpaidMaintenance, interiorCost,
+        loanAmount, loanInterest, loanFee, prepaymentPenalty, enforcementCost,
+        holdMonths, loanRate,
+      } as import("@/types/database").Json,
+      result_data: { totalCost, acquisitionTax: taxResult.total, priceAnalysis: priceAnalysisJson, historyId },
+    }).then(({ error }) => {
+      if (error) console.error("[profit_calculations] 저장 실패:", error.message);
+    });
   }
 
   const result: AnalyzeResult = { priceAnalysis, costs, profitAnalysis, historyId };

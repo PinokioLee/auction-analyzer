@@ -11,35 +11,23 @@ export async function GET(req: NextRequest) {
 
   const supabase = await createClient();
 
-  const query = supabase
-    .from("apartment_trade")
-    .select("apt_name")
-    .eq("lawd_cd", lawdCd);
-
-  // 검색어가 있으면 ilike 필터
-  const filtered = q.trim()
-    ? query.ilike("apt_name", `%${q.trim()}%`)
-    : query;
-
-  // limit 500 → 3000으로 상향: 많은 지역에서 아파트 누락 방지
-  const { data, error } = await filtered.limit(3000);
+  // DB 측에서 GROUP BY + COUNT → JS 3000행 그룹핑 제거
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("search_apartments", {
+    p_lawd_cd: lawdCd,
+    p_query: q.trim(),
+  });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // 아파트명별 거래 건수 집계 → 많은 순
-  const counts = new Map<string, number>();
-  for (const row of data ?? []) {
-    counts.set(row.apt_name, (counts.get(row.apt_name) ?? 0) + 1);
-  }
-
-  const result = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 20)
-    .map(([name, count]) => ({ name, count }));
+  const result = (data ?? []).map((row: { name: string; count: number }) => ({
+    name: row.name,
+    count: row.count,
+  }));
 
   return NextResponse.json(result, {
-    headers: { "Cache-Control": "public, max-age=300" },
+    headers: { "Cache-Control": "public, max-age=3600" },
   });
 }

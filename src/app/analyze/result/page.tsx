@@ -234,7 +234,7 @@ export default async function ResultPage({ searchParams }: Props) {
     : 0;
 
   // 대출이자 breakdown
-  const holdMonths    = priceAnalysis?.holdMonths ?? 0;
+  const holdMonths    = priceAnalysis?.holdMonths ?? 12;
   const loanRate      = priceAnalysis?.loanRate ?? 0;
   const monthlyInterest = holdMonths > 0 && loanInterest > 0
     ? Math.round(loanInterest / holdMonths)

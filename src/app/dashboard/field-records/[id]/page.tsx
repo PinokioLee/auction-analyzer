@@ -27,11 +27,13 @@ interface Props {
 export default async function FieldRecordDetailPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: rec } = await supabase
     .from("field_records")
     .select("*")
     .eq("id", id)
+    .eq("user_id", user?.id ?? "")
     .single();
 
   if (!rec) notFound();
