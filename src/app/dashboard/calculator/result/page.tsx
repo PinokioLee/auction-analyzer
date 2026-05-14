@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
-import { ExitStrategyTable } from "@/components/dashboard/exit-strategy-table";
+
 import { naverMapUrl } from "@/lib/utils/naver-link";
 
 export const metadata: Metadata = {
@@ -54,11 +54,11 @@ function CostRow({
 
 // ── PriceCard ────────────────────────────────────────────
 function PriceCard({
-  label, floorRange, marketPrice, minPrice, maxPrice, count, baseCost, myInvestment,
+  label, floorRange, marketPrice, minPrice, maxPrice, count, totalCost, myInvestment,
 }: {
   label: string; floorRange: string; marketPrice: number;
   minPrice: number; maxPrice: number; count: number;
-  baseCost: number; myInvestment: number;
+  totalCost: number; myInvestment: number;
 }) {
   if (marketPrice === 0) {
     return (
@@ -69,14 +69,15 @@ function PriceCard({
     );
   }
 
-  const brokerage    = calcBrokerage(marketPrice);
-  const profit       = marketPrice - baseCost - brokerage;
+  const salePrice    = Math.round((minPrice + maxPrice) / 2);
+  const brokerage    = calcBrokerage(salePrice);
+  const profit       = salePrice - totalCost - brokerage;
   const positive     = profit >= 0;
-  const hasLoan      = myInvestment < baseCost;
+  const hasLoan      = myInvestment < totalCost;
   const investmentROI = myInvestment > 0
     ? Math.round((profit / myInvestment) * 1000) / 10
     : null;
-  const baseROI = Math.round((profit / baseCost) * 1000) / 10;
+  const baseROI = Math.round((profit / totalCost) * 1000) / 10;
   const colorText = positive ? "text-red-600" : "text-blue-600";
   const colorSub  = positive ? "text-red-400" : "text-blue-400";
 
@@ -108,7 +109,7 @@ function PriceCard({
         </div>
         <div className="h-16 w-px bg-black/10 shrink-0 self-center" />
         <div className="text-right shrink-0 self-center">
-          <p className="text-[10px] text-zinc-400">수익(평균)</p>
+          <p className="text-[10px] text-zinc-400">예상수익</p>
           <p className={cn("tabular-nums text-[13px] font-bold", colorText)}>
             {positive ? "+" : ""}{formatManwon(profit)}
           </p>
@@ -197,12 +198,6 @@ export default async function ResultPage({ searchParams }: Props) {
   const holdMonths      = priceAnalysis?.holdMonths ?? 12;
   const monthlyInterest = holdMonths > 0 && loanInterest > 0
     ? Math.round(loanInterest / holdMonths) : 0;
-
-  // 출구전략 기준 매도가: mid → 없으면 low → 없으면 high
-  const exitSalePrice =
-    (priceAnalysis?.mid ?? 0) > 0 ? (priceAnalysis!.mid) :
-    (priceAnalysis?.low ?? 0) > 0 ? (priceAnalysis!.low) :
-    (priceAnalysis?.high ?? 0);
 
   // 링크
   const lawdCdForLink = priceAnalysis?.lawdCd ?? "";
@@ -300,24 +295,24 @@ export default async function ResultPage({ searchParams }: Props) {
                 <PriceCard label="저층" floorRange={lowRange}
                   marketPrice={priceAnalysis.low} minPrice={priceAnalysis.lowMin ?? 0}
                   maxPrice={priceAnalysis.lowMax ?? 0} count={priceAnalysis.lowCount ?? 0}
-                  baseCost={baseCost} myInvestment={myInvestment} />
+                  totalCost={totalCost} myInvestment={myInvestment} />
               )}
               {(priceAnalysis.midCount ?? 0) > 0 && (
                 <PriceCard label="중층" floorRange={midRange}
                   marketPrice={priceAnalysis.mid} minPrice={priceAnalysis.midMin ?? 0}
                   maxPrice={priceAnalysis.midMax ?? 0} count={priceAnalysis.midCount ?? 0}
-                  baseCost={baseCost} myInvestment={myInvestment} />
+                  totalCost={totalCost} myInvestment={myInvestment} />
               )}
               {(priceAnalysis.highCount ?? 0) > 0 && (
                 <PriceCard label="고층" floorRange={highRange}
                   marketPrice={priceAnalysis.high} minPrice={priceAnalysis.highMin ?? 0}
                   maxPrice={priceAnalysis.highMax ?? 0} count={priceAnalysis.highCount ?? 0}
-                  baseCost={baseCost} myInvestment={myInvestment} />
+                  totalCost={totalCost} myInvestment={myInvestment} />
               )}
             </div>
             <p className="mt-3 text-[11px] text-zinc-400">
-              * 수익 = 매도가 − 취득가 − 중개수수료 (대출이자·중도상환수수료 별도)
-              {hasLoan && " · 투자금 대비 수익률은 실투자금 기준"}
+              * 매도가 = (저가+고가)÷2 · 수익 = 매도가 − 최종취득가 − 중개수수료
+              {hasLoan && " · 수익률은 실투자금 기준"}
             </p>
           </>
         ) : (
@@ -327,19 +322,6 @@ export default async function ResultPage({ searchParams }: Props) {
           </div>
         )}
       </div>
-
-      {/* 출구전략별 수익 비교 */}
-      {hasPrice && exitSalePrice > 0 && (
-        <ExitStrategyTable
-          input={{
-            baseCost,
-            myInvestment,
-            salePrice: exitSalePrice,
-            inputHoldMonths: holdMonths,
-          }}
-          hasLoan={hasLoan}
-        />
-      )}
 
       {/* 취득 비용 상세 */}
       <div className="mb-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -356,8 +338,7 @@ export default async function ResultPage({ searchParams }: Props) {
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">부대비용</p>
             <div className="space-y-2">
               <CostRow label="법무사 비용"    value={row.legal_fee ?? 0}         indent />
-              <CostRow label="명도비용(평당)" value={evictionCost}               indent
-                detail={evictionPerPyeong > 0 ? `${areaPyeong}평 × ${evictionPerPyeong}만원/평` : undefined} />
+              <CostRow label="명도비용" value={evictionCost} indent />
               <CostRow label="미납관리비"     value={row.unpaid_maintenance ?? 0} indent />
               <CostRow label="인테리어 비용"  value={row.interior_cost ?? 0}      indent />
               <CostRow label="대출이자"       value={loanInterest}               indent
@@ -371,17 +352,6 @@ export default async function ResultPage({ searchParams }: Props) {
           <div className="border-t border-zinc-200 pt-3">
             <CostRow label="최종 취득가" value={totalCost} bold />
           </div>
-          {(loanInterest > 0 || prepaymentPenalty > 0) && (
-            <div className="rounded-lg bg-zinc-50 px-3 py-2.5">
-              <p className="text-xs text-zinc-500">
-                수익 계산 기준 취득가{" "}
-                <span className="tabular-nums font-semibold text-zinc-700">{formatManwon(baseCost)}</span>
-                <span className="ml-1 text-zinc-400">
-                  (대출이자·중도상환수수료 {formatManwon(loanInterest + prepaymentPenalty)} 제외)
-                </span>
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
