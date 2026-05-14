@@ -234,6 +234,318 @@ export type Database = {
         }
         Relationships: []
       }
+      apartment_master: {
+        Row: {
+          id: string
+          lawd_cd: string
+          apt_name: string
+          apt_name_norm: string | null
+          addr: string | null
+          total_floors: number | null
+          total_household: number | null
+          build_year: number | null
+          dong_name: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          lawd_cd: string
+          apt_name: string
+          apt_name_norm?: string | null
+          addr?: string | null
+          total_floors?: number | null
+          total_household?: number | null
+          build_year?: number | null
+          dong_name?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          lawd_cd?: string
+          apt_name?: string
+          apt_name_norm?: string | null
+          addr?: string | null
+          total_floors?: number | null
+          total_household?: number | null
+          build_year?: number | null
+          dong_name?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      apartment_alias: {
+        Row: {
+          id: string
+          raw_name: string
+          normalized_name: string
+          lawd_cd: string | null
+        }
+        Insert: {
+          id?: string
+          raw_name: string
+          normalized_name: string
+          lawd_cd?: string | null
+        }
+        Update: {
+          id?: string
+          raw_name?: string
+          normalized_name?: string
+          lawd_cd?: string | null
+        }
+        Relationships: []
+      }
+      apartment_trade: {
+        Row: {
+          id: string
+          lawd_cd: string
+          apt_name: string
+          exclusive_area: number
+          floor: number | null
+          deal_amount: number
+          deal_year: string | null
+          deal_month: string | null
+          deal_day: string | null
+          apt_master_id: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          lawd_cd: string
+          apt_name: string
+          exclusive_area: number
+          floor?: number | null
+          deal_amount: number
+          deal_year?: string | null
+          deal_month?: string | null
+          deal_day?: string | null
+          apt_master_id?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          lawd_cd?: string
+          apt_name?: string
+          exclusive_area?: number
+          floor?: number | null
+          deal_amount?: number
+          deal_year?: string | null
+          deal_month?: string | null
+          deal_day?: string | null
+          apt_master_id?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      apartment_rent: {
+        Row: {
+          id: string
+          lawd_cd: string
+          apt_name: string
+          exclusive_area: number
+          floor: number | null
+          rent_type: string | null
+          deposit: number | null
+          monthly_rent: number | null
+          contract_year: string | null
+          contract_month: string | null
+          apt_master_id: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          lawd_cd: string
+          apt_name: string
+          exclusive_area: number
+          floor?: number | null
+          rent_type?: string | null
+          deposit?: number | null
+          monthly_rent?: number | null
+          contract_year?: string | null
+          contract_month?: string | null
+          apt_master_id?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          lawd_cd?: string
+          apt_name?: string
+          exclusive_area?: number
+          floor?: number | null
+          rent_type?: string | null
+          deposit?: number | null
+          monthly_rent?: number | null
+          contract_year?: string | null
+          contract_month?: string | null
+          apt_master_id?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      apartment_monthly_stats: {
+        Row: {
+          id: string
+          apt_master_id: string | null
+          exclusive_area: number | null
+          year_month: string | null
+          avg_price: number | null
+          min_price: number | null
+          max_price: number | null
+          trade_count: number | null
+        }
+        Insert: {
+          id?: string
+          apt_master_id?: string | null
+          exclusive_area?: number | null
+          year_month?: string | null
+          avg_price?: number | null
+          min_price?: number | null
+          max_price?: number | null
+          trade_count?: number | null
+        }
+        Update: {
+          id?: string
+          apt_master_id?: string | null
+          exclusive_area?: number | null
+          year_month?: string | null
+          avg_price?: number | null
+          min_price?: number | null
+          max_price?: number | null
+          trade_count?: number | null
+        }
+        Relationships: []
+      }
+      apartment_rent_monthly_stats: {
+        Row: {
+          id: string
+          apt_master_id: string | null
+          exclusive_area: number | null
+          year_month: string | null
+          avg_deposit: number | null
+          trade_count: number | null
+        }
+        Insert: {
+          id?: string
+          apt_master_id?: string | null
+          exclusive_area?: number | null
+          year_month?: string | null
+          avg_deposit?: number | null
+          trade_count?: number | null
+        }
+        Update: {
+          id?: string
+          apt_master_id?: string | null
+          exclusive_area?: number | null
+          year_month?: string | null
+          avg_deposit?: number | null
+          trade_count?: number | null
+        }
+        Relationships: []
+      }
+      field_records: {
+        Row: {
+          id: string
+          user_id: string
+          case_number: string | null
+          bid_date: string | null
+          lawd_cd: string | null
+          apt_name: string | null
+          exclusive_area: number | null
+          memo: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          case_number?: string | null
+          bid_date?: string | null
+          lawd_cd?: string | null
+          apt_name?: string | null
+          exclusive_area?: number | null
+          memo?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          case_number?: string | null
+          bid_date?: string | null
+          lawd_cd?: string | null
+          apt_name?: string | null
+          exclusive_area?: number | null
+          memo?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profit_calculations: {
+        Row: {
+          id: string
+          user_id: string | null
+          lawd_cd: string | null
+          apt_name: string | null
+          exclusive_area: number | null
+          input_data: Json | null
+          result_data: Json | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          lawd_cd?: string | null
+          apt_name?: string | null
+          exclusive_area?: number | null
+          input_data?: Json | null
+          result_data?: Json | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          lawd_cd?: string | null
+          apt_name?: string | null
+          exclusive_area?: number | null
+          input_data?: Json | null
+          result_data?: Json | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      feature_requests: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          body: string | null
+          category: string | null
+          status: string | null
+          like_count: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          body?: string | null
+          category?: string | null
+          status?: string | null
+          like_count?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          body?: string | null
+          category?: string | null
+          status?: string | null
+          like_count?: number | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

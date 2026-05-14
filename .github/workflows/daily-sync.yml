@@ -21,7 +21,7 @@ jobs:
       - run: npm ci
 
       - name: Run daily sync
-        run: npx tsx scripts/daily-sync.ts
+        run: npx tsx --tsconfig scripts/tsconfig.json scripts/daily-sync.ts
         env:
           MOLIT_API_KEY: ${{ secrets.MOLIT_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

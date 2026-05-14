@@ -125,6 +125,8 @@ export async function POST(request: NextRequest) {
 
   // ⑤ Supabase 저장
   let historyId = "";
+  const priceAnalysisJson = JSON.parse(JSON.stringify({ ...priceAnalysis, dataSource, lawdCd, holdMonths, loanRate }));
+
   try {
     const { data, error } = await supabase
       .from("analysis_history")
@@ -145,7 +147,7 @@ export async function POST(request: NextRequest) {
         prepayment_penalty: prepaymentPenalty as number,
         enforcement_cost:   enforcementCost as number,
         total_cost:         totalCost,
-        price_analysis:     JSON.parse(JSON.stringify({ ...priceAnalysis, dataSource, lawdCd, holdMonths, loanRate })),
+        price_analysis:     priceAnalysisJson,
       })
       .select("id")
       .single();
@@ -157,6 +159,41 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error("[Supabase] 예외:", err);
+  }
+
+  // ⑥ 로그인 사용자는 profit_calculations에도 저장
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("profit_calculations").insert({
+        user_id:        user.id,
+        lawd_cd:        lawdCd as string,
+        apt_name:       (aptName as string).trim(),
+        exclusive_area: exclusiveArea as number,
+        input_data: {
+          bidPrice:          bidPrice          as number,
+          legalFee:          legalFee          as number,
+          evictionCost:      evictionCost      as number,
+          unpaidMaintenance: unpaidMaintenance as number,
+          interiorCost:      interiorCost      as number,
+          loanAmount:        loanAmount        as number,
+          loanInterest:      loanInterest      as number,
+          loanFee:           loanFee           as number,
+          prepaymentPenalty: prepaymentPenalty as number,
+          enforcementCost:   enforcementCost   as number,
+          holdMonths:        holdMonths        as number,
+          loanRate:          loanRate          as number,
+        } as import("@/types/database").Json,
+        result_data: {
+          totalCost,
+          acquisitionTax: taxResult.total,
+          priceAnalysis: priceAnalysisJson,
+          historyId,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("[profit_calculations] 저장 예외:", err);
   }
 
   const result: AnalyzeResult = { priceAnalysis, costs, profitAnalysis, historyId };
