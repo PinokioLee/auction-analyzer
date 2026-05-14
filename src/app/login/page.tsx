@@ -15,6 +15,9 @@ function KakaoLoginButton() {
       provider: "kakao",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          scope: "profile_nickname profile_image",
+        },
       },
     });
     if (error) console.error("Kakao login error:", error);
