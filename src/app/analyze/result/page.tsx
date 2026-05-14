@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { ChevronLeft, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
+import { naverMapUrl } from "@/lib/utils/naver-link";
+import regionCodes from "../../../../public/data/region-codes.json";
 
 export const metadata: Metadata = {
   title: "분석 결과 | 경매 분석기",
@@ -240,6 +242,9 @@ export default async function ResultPage({ searchParams }: Props) {
   const pricePageUrl = lawdCdForLink
     ? `/apartment/${lawdCdForLink}/${encodeURIComponent(row.apartment_name)}`
     : null;
+  const region = regionCodes.find((r) => r.code === lawdCdForLink);
+  const regionName = region ? `${region.sido} ${region.sigungu}` : "";
+  const mapUrl = naverMapUrl(row.apartment_name, regionName || undefined);
 
   return (
     <div className="mx-auto max-w-[640px] px-4 py-10">
@@ -263,14 +268,25 @@ export default async function ResultPage({ searchParams }: Props) {
             전용 {row.area}㎡ · 입찰가 {formatKoreanWon(row.bid_price)}
           </p>
         </div>
-        {pricePageUrl && (
-          <Link
-            href={pricePageUrl}
-            className="mt-1 flex shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
+        <div className="mt-1 flex shrink-0 gap-1.5">
+          {pricePageUrl && (
+            <Link
+              href={pricePageUrl}
+              className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
+            >
+              국토부 실거래가 정보
+            </Link>
+          )}
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
           >
-            시세
-          </Link>
-        )}
+            <ExternalLink className="h-3 w-3" />
+            네이버 지도
+          </a>
+        </div>
       </div>
 
       {/* 최종 취득가 카드 */}

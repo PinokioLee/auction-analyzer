@@ -6,8 +6,11 @@ import { analyzePriceByFloor } from "@/lib/molit/client";
 import regionCodes from "../../../../../public/data/region-codes.json";
 import type { AptTransaction } from "@/types/auction";
 
+const PAGE_SIZE = 20;
+
 interface Props {
   params: Promise<{ lawdCd: string; aptName: string }>;
+  searchParams: Promise<{ area?: string; page?: string }>;
 }
 
 function findRegion(lawdCd: string) {
@@ -36,14 +39,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ApartmentPage({ params }: Props) {
+export default async function ApartmentPage({ params, searchParams }: Props) {
   const { lawdCd, aptName: rawName } = await params;
+  const { area: areaParam, page: pageParam } = await searchParams;
   const aptName = decodeURIComponent(rawName);
   const region  = findRegion(lawdCd);
 
   const supabase = await createClient();
 
-  // 최근 12개월 실거래 조회
+  // 최근 12개월 전체 실거래 조회
   const cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - 12);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
@@ -55,7 +59,7 @@ export default async function ApartmentPage({ params }: Props) {
     .eq("apt_name", aptName)
     .gte("deal_date", cutoffStr)
     .order("deal_date", { ascending: false })
-    .limit(200);
+    .limit(500);
 
   if (!txData || txData.length === 0) notFound();
 
@@ -68,9 +72,13 @@ export default async function ApartmentPage({ params }: Props) {
   }
   const areas = Array.from(areaMap.keys()).sort((a, b) => a - b);
 
-  // 가장 거래 많은 면적으로 기본 층별 분석
-  const primaryArea = [...areaMap.entries()].sort((a, b) => b[1].length - a[1].length)[0];
-  const primaryTxs: AptTransaction[] = primaryArea[1].map((t) => ({
+  // 선택된 평형 (기본: 거래 가장 많은 평형)
+  const primaryArea = [...areaMap.entries()].sort((a, b) => b[1].length - a[1].length)[0][0];
+  const selectedArea = areaParam ? Number(areaParam) : primaryArea;
+  const selectedTxs = areaMap.get(selectedArea) ?? txData;
+
+  // 층별 분석 (선택 평형 기준)
+  const primaryTxs: AptTransaction[] = selectedTxs.map((t) => ({
     aptName,
     area: t.exclusive_area,
     floor: t.floor ?? 1,
@@ -80,8 +88,20 @@ export default async function ApartmentPage({ params }: Props) {
   }));
   const floorAnalysis = analyzePriceByFloor(primaryTxs, 20, 12);
 
+  // 페이지네이션
+  const currentPage = Math.max(1, Number(pageParam) || 1);
+  const totalPages  = Math.ceil(selectedTxs.length / PAGE_SIZE);
+  const pagedTxs    = selectedTxs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const loc = region ? `${region.sido} ${region.sigungu}` : lawdCd;
   const calcUrl = `/dashboard/calculator?lawdCd=${lawdCd}&aptName=${encodeURIComponent(aptName)}`;
+
+  function areaHref(a: number, p = 1) {
+    return `/apartment/${lawdCd}/${encodeURIComponent(aptName)}?area=${a}&page=${p}`;
+  }
+  function pageHref(p: number) {
+    return `/apartment/${lawdCd}/${encodeURIComponent(aptName)}?area=${selectedArea}&page=${p}`;
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -94,12 +114,34 @@ export default async function ApartmentPage({ params }: Props) {
         </p>
       </div>
 
-      {/* 층별 시세 (주요 면적) */}
+      {/* 평형 필터 탭 */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {areas.map((area) => {
+          const count   = areaMap.get(area)!.length;
+          const pyeong  = Math.round(area * 0.3025 * 10) / 10;
+          const active  = area === selectedArea;
+          return (
+            <Link
+              key={area}
+              href={areaHref(area)}
+              className={`rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors ${
+                active
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400"
+              }`}
+            >
+              {area}㎡ ({pyeong}평) · {count}건
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* 층별 시세 */}
       <section className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6">
         <h2 className="mb-1 text-[15px] font-semibold text-zinc-800">
           층별 평균 시세
           <span className="ml-2 text-[13px] font-normal text-zinc-400">
-            전용 {primaryArea[0]}㎡ 기준
+            전용 {selectedArea}㎡ 기준
           </span>
         </h2>
         <p className="mb-5 text-[12px] text-zinc-400">{floorAnalysis.period}</p>
@@ -115,8 +157,7 @@ export default async function ApartmentPage({ params }: Props) {
               <p className="mt-1 text-[18px] font-bold text-zinc-900">{fmt(avg)}</p>
               {count > 0 && (
                 <p className="mt-0.5 text-[11px] text-zinc-400">
-                  {fmt(min)} ~ {fmt(max)}
-                  <br />({count}건)
+                  {fmt(min)} ~ {fmt(max)}<br />({count}건)
                 </p>
               )}
               {count === 0 && <p className="mt-0.5 text-[11px] text-zinc-400">거래 없음</p>}
@@ -125,56 +166,77 @@ export default async function ApartmentPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 면적별 거래 수 */}
-      {areas.length > 1 && (
-        <section className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6">
-          <h2 className="mb-4 text-[15px] font-semibold text-zinc-800">면적별 거래 현황</h2>
-          <div className="flex flex-wrap gap-2">
-            {areas.map((area) => {
-              const count = areaMap.get(area)!.length;
-              const txs   = areaMap.get(area)!;
-              const avg   = Math.round(txs.reduce((s, t) => s + t.deal_amount, 0) / count);
-              return (
-                <div key={area} className="rounded-xl border border-zinc-200 px-4 py-2.5 text-center">
-                  <p className="text-[13px] font-semibold text-zinc-900">{area}㎡</p>
-                  <p className="text-[12px] text-zinc-500">{fmt(avg)} · {count}건</p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* 최근 거래 내역 */}
+      {/* 거래 내역 */}
       <section className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6">
-        <h2 className="mb-4 text-[15px] font-semibold text-zinc-800">최근 거래 내역</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-[15px] font-semibold text-zinc-800">
+            거래 내역
+            <span className="ml-2 text-[13px] font-normal text-zinc-400">
+              전용 {selectedArea}㎡ · 총 {selectedTxs.length}건
+            </span>
+          </h2>
+          <p className="text-[12px] text-zinc-400">
+            {currentPage}/{totalPages} 페이지
+          </p>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-zinc-100 text-left text-zinc-400">
                 <th className="pb-2 font-medium">거래일</th>
-                <th className="pb-2 font-medium">면적</th>
                 <th className="pb-2 font-medium">층</th>
                 <th className="pb-2 text-right font-medium">금액</th>
               </tr>
             </thead>
             <tbody>
-              {txData.slice(0, 20).map((tx, i) => (
+              {pagedTxs.map((tx, i) => (
                 <tr key={i} className="border-b border-zinc-50">
                   <td className="py-2 text-zinc-500">{tx.deal_date}</td>
-                  <td className="py-2 text-zinc-700">{tx.exclusive_area}㎡</td>
                   <td className="py-2 text-zinc-500">{tx.floor ?? "—"}층</td>
                   <td className="py-2 text-right font-semibold text-zinc-900">{fmt(tx.deal_amount)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {txData.length > 20 && (
-            <p className="mt-3 text-center text-[12px] text-zinc-400">
-              최근 20건 표시 (전체 {txData.length}건)
-            </p>
-          )}
         </div>
+
+        {/* 페이지네이션 */}
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-center gap-1">
+            {currentPage > 1 && (
+              <Link
+                href={pageHref(currentPage - 1)}
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-[12px] text-zinc-600 hover:bg-zinc-50"
+              >
+                이전
+              </Link>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((p) => Math.abs(p - currentPage) <= 2)
+              .map((p) => (
+                <Link
+                  key={p}
+                  href={pageHref(p)}
+                  className={`rounded-lg border px-3 py-1.5 text-[12px] transition-colors ${
+                    p === currentPage
+                      ? "border-zinc-900 bg-zinc-900 text-white"
+                      : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                  }`}
+                >
+                  {p}
+                </Link>
+              ))}
+            {currentPage < totalPages && (
+              <Link
+                href={pageHref(currentPage + 1)}
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-[12px] text-zinc-600 hover:bg-zinc-50"
+              >
+                다음
+              </Link>
+            )}
+          </div>
+        )}
       </section>
 
       {/* CTA */}

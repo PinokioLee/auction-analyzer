@@ -3,8 +3,8 @@ import Link from "next/link";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
-
 import { naverMapUrl } from "@/lib/utils/naver-link";
+import regionCodes from "../../../../../public/data/region-codes.json";
 
 export const metadata: Metadata = {
   title: "분석 결과 | 경매 분석기",
@@ -204,7 +204,9 @@ export default async function ResultPage({ searchParams }: Props) {
   const pricePageUrl = lawdCdForLink
     ? `/apartment/${lawdCdForLink}/${encodeURIComponent(row.apartment_name)}`
     : null;
-  const mapUrl = naverMapUrl(row.apartment_name);
+  const region = regionCodes.find((r) => r.code === lawdCdForLink);
+  const regionName = region ? `${region.sido} ${region.sigungu}` : "";
+  const mapUrl = naverMapUrl(row.apartment_name, regionName || undefined);
 
   return (
     <div className="mx-auto max-w-[640px] py-10">
@@ -234,7 +236,7 @@ export default async function ResultPage({ searchParams }: Props) {
               href={pricePageUrl}
               className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
             >
-              시세
+              국토부 실거래가 정보
             </Link>
           )}
           <a
@@ -244,7 +246,7 @@ export default async function ResultPage({ searchParams }: Props) {
             className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
           >
             <ExternalLink className="h-3 w-3" />
-            지도
+            네이버 지도
           </a>
         </div>
       </div>
