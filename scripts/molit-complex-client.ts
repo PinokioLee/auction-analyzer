@@ -1,10 +1,8 @@
 /**
  * 국토교통부 공동주택 단지 API 클라이언트
  *
- * - AptListService3       : 단지 목록 (시군구코드 기준)
- *   오퍼레이션: /getSigunguAptList3
- * - AptBasisInfoServiceV4 : 단지 기본/상세 정보 (단지코드 기준)
- *   오퍼레이션: /getAphusBassInfoV4
+ * - AptListService3/getSigunguAptList3    : 시군구 단지 목록
+ * - AptBasisInfoServiceV4/getAphusBassInfoV4 : 단지 기본 정보
  */
 
 const LIST_ENDPOINT =
@@ -15,13 +13,13 @@ const BASIS_ENDPOINT =
 // ── 단지 목록 ──────────────────────────────────────────────────
 
 export interface ComplexListItem {
-  kaptCode: string;   // 단지코드
-  kaptName: string;   // 단지명
-  bjdCode:  string;   // 법정동코드 (10자리)
+  kaptCode: string;
+  kaptName: string;
+  bjdCode:  string;
   as1:      string;   // 시도명
   as2:      string;   // 시군구명
   as3:      string;   // 읍면동명
-  as4:      string;   // 단지번지
+  as4:      string | null;
 }
 
 interface ListApiResponse {
@@ -31,7 +29,7 @@ interface ListApiResponse {
       totalCount: number;
       pageNo: number;
       numOfRows: number;
-      items: { item: ComplexListItem | ComplexListItem[] } | "" | null;
+      items: ComplexListItem[] | null;  // 배열 직접 반환
     };
   };
 }
@@ -46,11 +44,11 @@ export async function fetchComplexList(lawdCd: string): Promise<ComplexListItem[
 
   while (true) {
     const params = new URLSearchParams({
-      serviceKey:   key,
-      sigunguCode:  lawdCd,   // 5자리 시군구코드
-      pageNo:       String(pageNo),
-      numOfRows:    String(numOfRows),
-      _type:        "json",
+      serviceKey:  key,
+      sigunguCode: lawdCd,
+      pageNo:      String(pageNo),
+      numOfRows:   String(numOfRows),
+      _type:       "json",
     });
 
     const res = await fetch(`${LIST_ENDPOINT}?${params}`, {
@@ -64,15 +62,12 @@ export async function fetchComplexList(lawdCd: string): Promise<ComplexListItem[
       throw new Error(`AptListService3 ${resultCode}: ${resultMsg}`);
     }
 
-    const body = data.response.body;
-    if (!body.items || typeof body.items !== "object") break;
-    const item = body.items.item;
-    if (!item) break;
+    const items = data.response.body.items;
+    if (!items || !Array.isArray(items) || items.length === 0) break;
 
-    const rows = Array.isArray(item) ? item : [item];
-    all.push(...rows);
+    all.push(...items);
 
-    if (all.length >= body.totalCount) break;
+    if (all.length >= data.response.body.totalCount) break;
     pageNo++;
   }
 
@@ -82,23 +77,23 @@ export async function fetchComplexList(lawdCd: string): Promise<ComplexListItem[
 // ── 단지 기본 정보 ─────────────────────────────────────────────
 
 export interface ComplexBasisItem {
-  kaptCode:     string;
-  kaptName:     string;
-  kaptAddr:     string;   // 주소
-  kaptUsedate:  string;   // 사용승인일 (YYYYMMDD)
-  kaptDong:     string;   // 동수
-  kaptTotHo:    string;   // 총세대수
-  kaptBcomplex: string;   // 총동수
-  kaptdaCnt:    string;   // 총주차대수
-  bjdCode:      string;
+  kaptCode:     string | null;
+  kaptName:     string | null;
+  kaptAddr:     string | null;
+  doroJuso:     string | null;   // 도로명주소
+  kaptUsedate:  string | null;   // 사용승인일 (YYYYMMDD)
+  kaptDongCnt:  string | null;   // 동수
+  hoCnt:        string | null;   // 세대수
+  kaptdaCnt:    string | null;   // 주차대수
+  bjdCode:      string | null;
+  kaptTopFloor: string | null;   // 최고층
 }
 
 interface BasisApiResponse {
   response: {
     header: { resultCode: string; resultMsg: string };
     body: {
-      totalCount: number;
-      items: { item: ComplexBasisItem | ComplexBasisItem[] } | "" | null;
+      item: ComplexBasisItem | null;  // 객체 직접 반환
     };
   };
 }
@@ -124,9 +119,5 @@ export async function fetchComplexBasis(kaptCode: string): Promise<ComplexBasisI
     throw new Error(`AptBasisInfoServiceV4 ${resultCode}: ${resultMsg}`);
   }
 
-  const body = data.response.body;
-  if (!body.items || typeof body.items !== "object") return null;
-  const item = body.items.item;
-  if (!item) return null;
-  return Array.isArray(item) ? item[0] : item;
+  return data.response.body.item ?? null;
 }

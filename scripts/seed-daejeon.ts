@@ -139,9 +139,10 @@ async function collectComplexBasis() {
       const info = await fetchComplexBasis(c.kapt_code);
       if (!info) { failed++; continue; }
 
-      const usedate = info.kaptUsedate?.trim() || null;
-      const totalHo = parseInt(info.kaptTotHo ?? "0", 10) || null;
-      const totalDong = parseInt(info.kaptDong ?? info.kaptBcomplex ?? "0", 10) || null;
+      const usedate  = info.kaptUsedate?.trim() || null;
+      const totalHo  = parseInt(info.hoCnt      ?? "0", 10) || null;
+      const totalDong = parseInt(info.kaptDongCnt ?? "0", 10) || null;
+      const roadAddr = info.doroJuso?.trim() || info.kaptAddr?.trim() || null;
 
       await supabase
         .from("apartment_master")
@@ -150,7 +151,7 @@ async function collectComplexBasis() {
           total_dong:      totalDong,
           use_date:        usedate,
           build_year:      usedate ? parseInt(usedate.slice(0, 4), 10) || null : null,
-          road_addr:       info.kaptAddr?.trim() || null,
+          road_addr:       roadAddr,
         })
         .eq("id", c.id);
 
@@ -188,10 +189,24 @@ async function collectTrade() {
         if (normalized.length > 0) {
           const { error } = await supabase
             .from("apt_transactions")
-            .upsert(normalized, {
-              onConflict: "lawd_cd,apt_name,exclusive_area,floor,deal_date,deal_amount",
-              ignoreDuplicates: true,
-            });
+            .upsert(
+              normalized.map((n) => ({
+                lawd_cd:        n.lawd_cd,
+                deal_ymd:       n.deal_ymd,
+                apt_name:       n.apt_name,
+                exclusive_area: n.exclusive_area,
+                deal_amount:    n.deal_amount,
+                floor:          n.floor,
+                deal_date:      n.deal_date,
+                build_year:     n.build_year,
+                dong:           n.dong,
+                jibun:          n.jibun,
+              })),
+              {
+                onConflict: "lawd_cd,apt_name,exclusive_area,floor,deal_date,deal_amount",
+                ignoreDuplicates: true,
+              }
+            );
           if (error) throw new Error(error.message);
           rows += normalized.length;
         }
