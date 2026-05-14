@@ -36,9 +36,11 @@ const DELAY_MS = 220; // 초당 ~4.5건 (일 10,000건 제한 여유)
 
 // ── CLI 파싱 ──────────────────────────────────────────────────
 const args = process.argv.slice(2);
-const months  = parseInt(args[args.indexOf("--months")  + 1] ?? "36", 10);
+const monthsIdx = args.indexOf("--months");
+const months    = monthsIdx !== -1 ? parseInt(args[monthsIdx + 1], 10) : 36;
 const skipBasis = args.includes("--skip-basis");
-const onlyStep  = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
+const onlyIdx   = args.indexOf("--only");
+const onlyStep  = onlyIdx !== -1 ? args[onlyIdx + 1] : null;
 
 // ── Supabase ──────────────────────────────────────────────────
 const supabase = createClient(
