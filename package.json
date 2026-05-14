@@ -10,7 +10,8 @@
     "collect:sample": "tsx --tsconfig scripts/tsconfig.json scripts/collect/sample.ts",
     "collect:region": "tsx --tsconfig scripts/tsconfig.json scripts/collect/region.ts",
     "collect:backfill": "tsx --tsconfig scripts/tsconfig.json scripts/backfill.ts",
-    "collect:daily": "tsx --tsconfig scripts/tsconfig.json scripts/daily-sync.ts"
+    "collect:daily": "tsx --tsconfig scripts/tsconfig.json scripts/daily-sync.ts",
+    "seed:daejeon": "tsx --tsconfig scripts/tsconfig.json scripts/seed-daejeon.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
