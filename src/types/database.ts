@@ -294,48 +294,6 @@ export type Database = {
         }
         Relationships: []
       }
-      apartment_trade: {
-        Row: {
-          id: string
-          lawd_cd: string
-          apt_name: string
-          exclusive_area: number
-          floor: number | null
-          deal_amount: number
-          deal_year: string | null
-          deal_month: string | null
-          deal_day: string | null
-          apt_master_id: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          lawd_cd: string
-          apt_name: string
-          exclusive_area: number
-          floor?: number | null
-          deal_amount: number
-          deal_year?: string | null
-          deal_month?: string | null
-          deal_day?: string | null
-          apt_master_id?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          lawd_cd?: string
-          apt_name?: string
-          exclusive_area?: number
-          floor?: number | null
-          deal_amount?: number
-          deal_year?: string | null
-          deal_month?: string | null
-          deal_day?: string | null
-          apt_master_id?: string | null
-          created_at?: string | null
-        }
-        Relationships: []
-      }
       apartment_rent: {
         Row: {
           id: string
@@ -348,6 +306,7 @@ export type Database = {
           monthly_rent: number | null
           contract_year: string | null
           contract_month: string | null
+          deal_date: string | null
           apt_master_id: string | null
           created_at: string | null
         }
@@ -362,6 +321,7 @@ export type Database = {
           monthly_rent?: number | null
           contract_year?: string | null
           contract_month?: string | null
+          deal_date?: string | null
           apt_master_id?: string | null
           created_at?: string | null
         }
