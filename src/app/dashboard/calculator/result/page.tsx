@@ -4,7 +4,7 @@ import { ChevronLeft, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
 import { ExitStrategyTable } from "@/components/dashboard/exit-strategy-table";
-import { naverLandUrl, naverMapUrl } from "@/lib/utils/naver-link";
+import { naverMapUrl } from "@/lib/utils/naver-link";
 
 export const metadata: Metadata = {
   title: "분석 결과 | 경매 분석기",
@@ -204,9 +204,12 @@ export default async function ResultPage({ searchParams }: Props) {
     (priceAnalysis?.low ?? 0) > 0 ? (priceAnalysis!.low) :
     (priceAnalysis?.high ?? 0);
 
-  // 네이버 링크
-  const landUrl = naverLandUrl(row.apartment_name);
-  const mapUrl  = naverMapUrl(row.apartment_name);
+  // 링크
+  const lawdCdForLink = priceAnalysis?.lawdCd ?? "";
+  const pricePageUrl = lawdCdForLink
+    ? `/apartment/${lawdCdForLink}/${encodeURIComponent(row.apartment_name)}`
+    : null;
+  const mapUrl = naverMapUrl(row.apartment_name);
 
   return (
     <div className="mx-auto max-w-[640px] py-10">
@@ -231,15 +234,14 @@ export default async function ResultPage({ searchParams }: Props) {
           </p>
         </div>
         <div className="flex shrink-0 gap-1.5">
-          <a
-            href={landUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
-          >
-            <ExternalLink className="h-3 w-3" />
-            시세
-          </a>
+          {pricePageUrl && (
+            <Link
+              href={pricePageUrl}
+              className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
+            >
+              시세
+            </Link>
+          )}
           <a
             href={mapUrl}
             target="_blank"

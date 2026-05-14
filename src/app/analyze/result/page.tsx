@@ -199,7 +199,7 @@ export default async function ResultPage({ searchParams }: Props) {
     midMin: number; midMax: number; midCount: number;
     highMin: number; highMax: number; highCount: number;
     dataCount: number; period: string; dataSource?: string;
-    holdMonths?: number; loanRate?: number;
+    holdMonths?: number; loanRate?: number; lawdCd?: string;
   } | null;
 
   const totalCost          = row.total_cost ?? row.bid_price;
@@ -235,6 +235,11 @@ export default async function ResultPage({ searchParams }: Props) {
     ? Math.round(loanInterest / holdMonths)
     : 0;
 
+  const lawdCdForLink = priceAnalysis?.lawdCd ?? "";
+  const pricePageUrl = lawdCdForLink
+    ? `/apartment/${lawdCdForLink}/${encodeURIComponent(row.apartment_name)}`
+    : null;
+
   return (
     <div className="mx-auto max-w-[640px] px-4 py-10">
 
@@ -248,13 +253,23 @@ export default async function ResultPage({ searchParams }: Props) {
       </Link>
 
       {/* 물건 헤더 */}
-      <div className="mb-6">
-        <h1 className="text-[24px] font-bold tracking-tight text-zinc-900">
-          {row.apartment_name}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          전용 {row.area}㎡ · 입찰가 {formatKoreanWon(row.bid_price)}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-[24px] font-bold tracking-tight text-zinc-900">
+            {row.apartment_name}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            전용 {row.area}㎡ · 입찰가 {formatKoreanWon(row.bid_price)}
+          </p>
+        </div>
+        {pricePageUrl && (
+          <Link
+            href={pricePageUrl}
+            className="mt-1 flex shrink-0 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] text-zinc-500 shadow-sm transition-colors hover:border-zinc-300 hover:text-zinc-800"
+          >
+            시세
+          </Link>
+        )}
       </div>
 
       {/* 최종 취득가 카드 */}
