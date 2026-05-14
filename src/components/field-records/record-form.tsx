@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -68,6 +68,7 @@ export function RecordForm({ mode, recordId, initialData }: Props) {
   // 아파트 자동완성
   const [aptSuggestions, setAptSuggestions] = useState<string[]>([]);
   const [aptFocused,     setAptFocused]     = useState(false);
+  const aptSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 상태
   const [saving,  setSaving]  = useState(false);
@@ -113,25 +114,26 @@ export function RecordForm({ mode, recordId, initialData }: Props) {
   }
 
   // ── 아파트 자동완성 ───────────────────────────────────
-  const fetchApts = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>;
-      return (q: string) => {
-        clearTimeout(timer);
-        if (!lawdCd || q.length < 1) { setAptSuggestions([]); return; }
-        timer = setTimeout(async () => {
-          try {
-            const res = await fetch(
-              `/api/apartments?lawdCd=${lawdCd}&q=${encodeURIComponent(q)}`
-            );
-            const data = await res.json();
-            setAptSuggestions((data as { apt_name: string }[]).map((d) => d.apt_name));
-          } catch { setAptSuggestions([]); }
-        }, 200);
-      };
-    })(),
-    [lawdCd]
-  );
+  const fetchApts = useCallback((q: string) => {
+    if (aptSearchTimerRef.current) clearTimeout(aptSearchTimerRef.current);
+    if (!lawdCd || q.length < 1) { setAptSuggestions([]); return; }
+
+    aptSearchTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/apartments?lawdCd=${lawdCd}&q=${encodeURIComponent(q)}`
+        );
+        const data = await res.json();
+        setAptSuggestions((data as { name: string }[]).map((d) => d.name));
+      } catch { setAptSuggestions([]); }
+    }, 200);
+  }, [lawdCd]);
+
+  useEffect(() => {
+    return () => {
+      if (aptSearchTimerRef.current) clearTimeout(aptSearchTimerRef.current);
+    };
+  }, []);
 
   function handleAptChange(value: string) {
     setAptName(value);

@@ -174,14 +174,12 @@ export default async function ResultPage({ searchParams }: Props) {
   } | null;
 
   const totalCost         = row.total_cost ?? row.bid_price;
-  const acquisitionTax    = row.acquisition_tax ?? 0;
   const loanInterest      = row.loan_interest ?? 0;
   const prepaymentPenalty = row.prepayment_penalty ?? 0;
   const loanAmount        = row.loan_amount ?? 0;
   const evictionCost      = row.eviction_cost ?? 0;
   const hasPrice          = priceAnalysis && priceAnalysis.dataCount > 0;
 
-  const baseCost     = totalCost - loanInterest - prepaymentPenalty;
   const myInvestment = totalCost - loanAmount;
   const hasLoan      = loanAmount > 0;
 
@@ -191,10 +189,6 @@ export default async function ResultPage({ searchParams }: Props) {
   const lowRange  = `1~${lowFloorMax}층`;
   const midRange  = `${lowFloorMax + 1}~${midFloorMax}층`;
   const highRange = `${midFloorMax + 1}~${totalFloorNum}층`;
-
-  const areaPyeong        = Math.round(row.area * 0.3025 * 10) / 10;
-  const evictionPerPyeong = areaPyeong > 0 && evictionCost > 0
-    ? Math.round(evictionCost / areaPyeong) : 0;
 
   const holdMonths      = priceAnalysis?.holdMonths ?? 12;
   const loanRate        = priceAnalysis?.loanRate ?? 0;

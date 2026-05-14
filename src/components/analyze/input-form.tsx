@@ -176,9 +176,11 @@ function AptAutocomplete({
   }, []);
 
   useEffect(() => {
-    setQuery(""); setSelected(""); setResults([]); setOpen(false);
-    abortRef.current?.abort();
-  }, [lawdCd]);
+    return () => {
+      abortRef.current?.abort();
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const search = useCallback(async (q: string) => {
     if (!lawdCd || q.trim().length < 1) { setResults([]); setOpen(false); return; }
@@ -295,7 +297,6 @@ export function AuctionInputForm() {
   const [bidPrice, setBidPrice] = useState("");
   const [holdMonths, setHoldMonths] = useState("12"); // 매도 희망일 (개월)
   const [costs, setCosts] = useState<CostState>(DEFAULT_COSTS);
-  const [showCosts, setShowCosts] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -335,7 +336,6 @@ export function AuctionInputForm() {
 
     const bid = Number(bidPrice);
     const months = Math.max(1, Number(holdMonths) || 12);
-    const areaPyeong = Number(selectedArea) * 0.3025;
     const loanPrincipal = bid * (costs.loanLtv / 100);
 
     // 파생 계산값
@@ -406,7 +406,6 @@ export function AuctionInputForm() {
   // 부대비용 미리보기 (합계)
   const bid = Number(bidPrice) || 0;
   const months = Math.max(1, Number(holdMonths) || 12);
-  const areaPyeong = Number(selectedArea) * 0.3025;
   const loanPrincipal = bid * (costs.loanLtv / 100);
   const totalAdditional =
     costs.legalFee +
@@ -460,7 +459,7 @@ export function AuctionInputForm() {
           {/* 아파트명 */}
           <div>
             <FormLabel>아파트명</FormLabel>
-            <AptAutocomplete lawdCd={lawdCd} onSelect={handleAptSelect} />
+            <AptAutocomplete key={lawdCd} lawdCd={lawdCd} onSelect={handleAptSelect} />
           </div>
 
           {/* 전용면적 */}

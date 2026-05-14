@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
     historyId
   ) {
     const user = userResult.value.data.user;
-    supabase.from("profit_calculations").insert({
+    const { error } = await supabase.from("profit_calculations").insert({
       user_id:        user.id,
       lawd_cd:        lawdCd as string,
       apt_name:       (aptName as string).trim(),
@@ -182,9 +182,8 @@ export async function POST(request: NextRequest) {
         holdMonths, loanRate,
       } as import("@/types/database").Json,
       result_data: { totalCost, acquisitionTax: taxResult.total, priceAnalysis: priceAnalysisJson, historyId },
-    }).then(({ error }) => {
-      if (error) console.error("[profit_calculations] 저장 실패:", error.message);
     });
+    if (error) console.error("[profit_calculations] 저장 실패:", error.message);
   }
 
   const result: AnalyzeResult = { priceAnalysis, costs, profitAnalysis, historyId };

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, TrendingUp, TrendingDown, ExternalLink } from "lucide-react";
+import { ChevronLeft, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn, formatManwon, formatKoreanWon } from "@/lib/utils";
 import { calculateAcquisitionTax } from "@/lib/calculator/acquisition-tax";
@@ -207,15 +207,12 @@ export default async function ResultPage({ searchParams }: Props) {
   } | null;
 
   const totalCost          = row.total_cost ?? row.bid_price;
-  const acquisitionTax     = row.acquisition_tax ?? 0;
   const loanInterest       = row.loan_interest ?? 0;
   const prepaymentPenalty  = row.prepayment_penalty ?? 0;
   const loanAmount         = row.loan_amount ?? 0;
   const evictionCost       = row.eviction_cost ?? 0;
   const hasPrice           = priceAnalysis && priceAnalysis.dataCount > 0;
 
-  // 수익 계산 기준 취득가 (대출이자·중도상환수수료 제외)
-  const baseCost = totalCost - loanInterest - prepaymentPenalty;
   // 실투자금 = 취득가 - 대출금액
   const myInvestment = totalCost - loanAmount;
 
@@ -228,11 +225,6 @@ export default async function ResultPage({ searchParams }: Props) {
   const highRange = `${midFloorMax + 1}~${totalFloorNum}층`;
 
   // 명도비용 breakdown (평당 역산)
-  const areaPyeong      = Math.round(row.area * 0.3025 * 10) / 10;
-  const evictionPerPyeong = areaPyeong > 0 && evictionCost > 0
-    ? Math.round(evictionCost / areaPyeong)
-    : 0;
-
   // 대출이자 breakdown
   const holdMonths    = priceAnalysis?.holdMonths ?? 12;
   const loanRate      = priceAnalysis?.loanRate ?? 0;

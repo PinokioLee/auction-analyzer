@@ -12,8 +12,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
 
   // DB 측에서 GROUP BY + COUNT → JS 3000행 그룹핑 제거
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("search_apartments", {
+  const { data, error } = await supabase.rpc("search_apartments", {
     p_lawd_cd: lawdCd,
     p_query: q.trim(),
   });
