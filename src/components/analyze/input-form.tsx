@@ -270,9 +270,6 @@ function AptAutocomplete({
                   onMouseEnter={() => setActiveIdx(idx)}
                 >
                   <span className="text-zinc-800">{r.name}</span>
-                  <span className="ml-2 shrink-0 text-xs text-zinc-400">
-                    {r.count.toLocaleString()}건
-                  </span>
                 </button>
               </li>
             ))}
