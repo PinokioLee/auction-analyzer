@@ -2,8 +2,6 @@ name: MOLIT Daily Sync
 
 on:
   workflow_dispatch: # 수동 실행
-  schedule:
-    - cron: "0 19 * * *" # 매일 04:00 KST (백필 끝나고)
 
 jobs:
   sync:
