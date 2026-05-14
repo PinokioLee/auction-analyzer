@@ -62,6 +62,15 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function errMsg(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === "object") {
+    const o = e as Record<string, unknown>;
+    return o["message"] ? String(o["message"]) : JSON.stringify(e);
+  }
+  return String(e);
+}
+
 // ── STEP 1: 단지 목록 수집 ────────────────────────────────────
 async function collectComplexList() {
   console.log("\n[1/4] 단지 목록 수집 시작");
@@ -89,11 +98,11 @@ async function collectComplexList() {
         .from("apartment_master")
         .upsert(rows, { onConflict: "lawd_cd,apt_name", ignoreDuplicates: false });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       console.log(`${list.length}건`);
       total += list.length;
     } catch (e) {
-      console.log(`오류: ${e instanceof Error ? e.message : e}`);
+      console.log(`오류: ${errMsg(e)}`);
     }
     await sleep(DELAY_MS);
   }
@@ -181,11 +190,11 @@ async function collectTrade() {
               onConflict: "lawd_cd,apt_name,exclusive_area,floor,deal_date,deal_amount",
               ignoreDuplicates: true,
             });
-          if (error) throw error;
+          if (error) throw new Error(error.message);
           rows += normalized.length;
         }
       } catch (e) {
-        process.stdout.write(`\n  오류 ${dist.code}/${ymd}: ${e instanceof Error ? e.message : e}\n`);
+        process.stdout.write(`\n  오류 ${dist.code}/${ymd}: ${errMsg(e)}\n`);
       }
 
       done++;
@@ -232,11 +241,11 @@ async function collectRent() {
                 ignoreDuplicates: true,
               }
             );
-          if (error) throw error;
+          if (error) throw new Error(error.message);
           rows += items.length;
         }
       } catch (e) {
-        process.stdout.write(`\n  오류 ${dist.code}/${ymd}: ${e instanceof Error ? e.message : e}\n`);
+        process.stdout.write(`\n  오류 ${dist.code}/${ymd}: ${errMsg(e)}\n`);
       }
 
       done++;

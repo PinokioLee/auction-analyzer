@@ -6,7 +6,7 @@
  */
 
 const LIST_ENDPOINT =
-  "https://apis.data.go.kr/1613000/AptListService3/getAptList";
+  "https://apis.data.go.kr/1613000/AptListService3/getAptListBjd";
 const BASIS_ENDPOINT =
   "https://apis.data.go.kr/1613000/AptBasisInfoServiceV4/getAptBasisInfo";
 
